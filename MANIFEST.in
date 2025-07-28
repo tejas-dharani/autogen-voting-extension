@@ -1,0 +1,45 @@
+# Include package metadata
+include LICENSE
+include README.md
+include CHANGELOG.md
+include pyproject.toml
+include requirements.txt
+
+# Include package marker for typing
+include autogen_voting/py.typed
+
+# Include documentation
+recursive-include docs *.md *.rst *.txt *.py
+recursive-include docs *.png *.jpg *.gif *.svg
+
+# Include examples
+recursive-include examples *.py *.md *.txt *.json
+
+# Include tests (for source distributions)
+recursive-include tests *.py *.json *.yaml *.yml
+
+# Include configuration files
+include .pre-commit-config.yaml
+include tox.ini
+
+# Exclude development and CI files from source distribution
+exclude .gitignore
+exclude .github
+recursive-exclude .github *
+exclude .venv
+recursive-exclude .venv *
+exclude htmlcov
+recursive-exclude htmlcov *
+exclude .coverage
+exclude .pytest_cache
+recursive-exclude .pytest_cache *
+exclude .mypy_cache
+recursive-exclude .mypy_cache *
+
+# Exclude compiled Python files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+global-exclude *.so
+global-exclude .DS_Store

@@ -1,0 +1,90 @@
+/* Custom CSS for AutoGen Voting Extension documentation */
+
+/* Brand colors */
+:root {
+    --primary-color: #2980B9;
+    --secondary-color: #3498DB;
+    --accent-color: #E74C3C;
+    --text-color: #2C3E50;
+    --background-color: #F8F9FA;
+}
+
+/* Custom styling for code blocks */
+.highlight {
+    background-color: #f8f8f8;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    padding: 16px;
+    overflow: auto;
+}
+
+/* Enhanced admonitions */
+.admonition {
+    margin: 1em 0;
+    padding: 12px;
+    border-left: 4px solid var(--primary-color);
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.admonition.note {
+    border-left-color: #17a2b8;
+}
+
+.admonition.warning {
+    border-left-color: #ffc107;
+}
+
+.admonition.danger {
+    border-left-color: var(--accent-color);
+}
+
+/* Custom voting method badges */
+.voting-method {
+    display: inline-block;
+    padding: 4px 8px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+    margin: 2px;
+}
+
+/* Table styling */
+table.docutils {
+    border-collapse: collapse;
+    border: 1px solid #e1e4e8;
+    width: 100%;
+}
+
+table.docutils th,
+table.docutils td {
+    border: 1px solid #e1e4e8;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+table.docutils th {
+    background-color: var(--background-color);
+    font-weight: bold;
+}
+
+/* Code inline styling */
+code.literal {
+    background-color: #f1f2f6;
+    padding: 2px 4px;
+    border-radius: 3px;
+    color: var(--text-color);
+}
+
+/* Link styling */
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}

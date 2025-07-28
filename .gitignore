@@ -205,3 +205,44 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Microsoft/Enterprise specific
+# Azure DevOps
+.azure/
+.azuredevops/
+
+# GitHub Actions artifacts
+.github/workflows/artifacts/
+
+# Enterprise development
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Documentation builds
+docs/build/
+site/
+
+# Local development overrides
+local_config.py
+local_settings.py
+
+# Temporary development files
+*.tmp
+*.temp
+*.bak
+*~
+
+# IDE specific (enable for team consistency)
+.vscode/
+.idea/
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

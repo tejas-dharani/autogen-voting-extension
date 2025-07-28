@@ -1,0 +1,314 @@
+"""Benchmark scenarios for comparing voting vs standard group chat approaches."""
+
+from dataclasses import dataclass
+from typing import List, Dict, Any, Optional
+from enum import Enum
+
+
+class ScenarioType(Enum):
+    """Types of benchmark scenarios."""
+    CODE_REVIEW = "code_review"
+    ARCHITECTURE_DECISION = "architecture_decision"
+    CONTENT_MODERATION = "content_moderation"
+
+
+@dataclass
+class BenchmarkScenario:
+    """Definition of a benchmark scenario for testing."""
+    
+    name: str
+    scenario_type: ScenarioType
+    description: str
+    task_prompt: str
+    expected_outcome: Optional[str] = None
+    success_criteria: Dict[str, Any] = None
+    agent_personas: List[Dict[str, str]] = None
+    
+    def __post_init__(self):
+        if self.success_criteria is None:
+            self.success_criteria = {}
+        if self.agent_personas is None:
+            self.agent_personas = []
+
+
+# Code Review Scenarios
+CODE_REVIEW_SCENARIOS = [
+    BenchmarkScenario(
+        name="bug_detection_security",
+        scenario_type=ScenarioType.CODE_REVIEW,
+        description="Security vulnerability detection in authentication code",
+        task_prompt="""
+Review this authentication code for security vulnerabilities and approve/reject for merge:
+
+```python
+def authenticate_user(username, password):
+    query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
+    result = db.execute(query)
+    if result:
+        session['user_id'] = result[0]['id']
+        return True
+    return False
+```
+
+Decision: Should this code be approved for merge? Provide reasoning.
+        """,
+        expected_outcome="reject",
+        success_criteria={
+            "identifies_sql_injection": True,
+            "identifies_plaintext_password": True,
+            "provides_security_reasoning": True
+        },
+        agent_personas=[
+            {"name": "SecurityExpert", "role": "Security specialist focused on vulnerability detection"},
+            {"name": "SeniorDev", "role": "Senior developer reviewing code quality and practices"},
+            {"name": "TeamLead", "role": "Team lead balancing security with delivery timelines"}
+        ]
+    ),
+    
+    BenchmarkScenario(
+        name="performance_optimization",
+        scenario_type=ScenarioType.CODE_REVIEW,
+        description="Performance review of data processing code",
+        task_prompt="""
+Review this data processing code for performance issues and approve/reject:
+
+```python
+def process_user_data(user_ids):
+    results = []
+    for user_id in user_ids:  # Could be 10,000+ users
+        user = db.query(f"SELECT * FROM users WHERE id = {user_id}")
+        profile = db.query(f"SELECT * FROM profiles WHERE user_id = {user_id}")
+        stats = db.query(f"SELECT * FROM user_stats WHERE user_id = {user_id}")
+        
+        results.append({
+            'user': user,
+            'profile': profile,
+            'stats': stats
+        })
+    return results
+```
+
+Decision: Should this code be approved for merge? Focus on performance implications.
+        """,
+        expected_outcome="reject",
+        success_criteria={
+            "identifies_n_plus_one": True,
+            "suggests_batch_processing": True,
+            "considers_scalability": True
+        },
+        agent_personas=[
+            {"name": "PerformanceEngineer", "role": "Performance engineer focused on scalability"},
+            {"name": "DatabaseExpert", "role": "Database specialist reviewing query patterns"},
+            {"name": "ProductionEngineer", "role": "Production engineer considering operational impact"}
+        ]
+    ),
+    
+    BenchmarkScenario(
+        name="code_quality_readability",
+        scenario_type=ScenarioType.CODE_REVIEW,
+        description="Code quality and readability assessment",
+        task_prompt="""
+Review this function for code quality and readability:
+
+```python
+def calc(x, y, z, op):
+    if op == 1:
+        return x + y * z if z > 0 else x + y
+    elif op == 2:
+        return x - y * z if z > 0 else x - y  
+    elif op == 3:
+        return x * y * z if z > 0 else x * y
+    else:
+        return x / y / z if z > 0 and y != 0 and z != 1 else x / y if y != 0 else 0
+```
+
+Decision: Should this code be approved? Consider maintainability and clarity.
+        """,
+        expected_outcome="reject",
+        success_criteria={
+            "identifies_poor_naming": True,
+            "suggests_refactoring": True,
+            "mentions_maintainability": True
+        },
+        agent_personas=[
+            {"name": "SeniorDev", "role": "Senior developer focused on code quality"},
+            {"name": "CodeReviewer", "role": "Code reviewer specializing in maintainability"},
+            {"name": "JuniorMentor", "role": "Mentor helping junior developers learn best practices"}
+        ]
+    )
+]
+
+
+# Architecture Decision Scenarios
+ARCHITECTURE_SCENARIOS = [
+    BenchmarkScenario(
+        name="microservices_vs_monolith",
+        scenario_type=ScenarioType.ARCHITECTURE_DECISION,
+        description="Decide between microservices and monolithic architecture",
+        task_prompt="""
+Our e-commerce platform needs to scale to handle 10x traffic growth. We're currently a monolith with:
+- 50,000 daily active users
+- 5-person development team
+- Current response times: 200ms average
+- Deployment frequency: Weekly releases
+
+Options:
+1. Break into microservices (user service, product service, order service, payment service)
+2. Scale the monolith horizontally with better caching and database optimization
+3. Hybrid approach: Extract only the most critical services
+
+Decision: Which approach should we take? Consider team size, complexity, and growth projections.
+        """,
+        success_criteria={
+            "considers_team_size": True,
+            "addresses_complexity": True,
+            "mentions_operational_overhead": True,
+            "provides_concrete_recommendation": True
+        },
+        agent_personas=[
+            {"name": "SolutionArchitect", "role": "Solution architect with enterprise experience"},
+            {"name": "TechLead", "role": "Technical lead familiar with current system"},
+            {"name": "DevOpsEngineer", "role": "DevOps engineer considering operational complexity"}
+        ]
+    ),
+    
+    BenchmarkScenario(
+        name="database_technology_choice",
+        scenario_type=ScenarioType.ARCHITECTURE_DECISION,
+        description="Choose database technology for analytics workload",
+        task_prompt="""
+We need to build a real-time analytics dashboard for our IoT platform processing:
+- 1M events per minute
+- Complex aggregations across time windows
+- Sub-second query response requirements
+- Mix of historical and real-time data
+
+Options:
+1. PostgreSQL with time-series extensions and read replicas
+2. ClickHouse for analytical workloads
+3. Apache Druid for real-time analytics
+4. Hybrid: Kafka + ClickHouse + Redis
+
+Decision: Which database architecture should we choose? Consider performance, complexity, and team expertise.
+        """,
+        success_criteria={
+            "analyzes_performance_requirements": True,
+            "considers_operational_complexity": True,
+            "addresses_team_expertise": True,
+            "provides_specific_recommendation": True
+        },
+        agent_personas=[
+            {"name": "DataArchitect", "role": "Data architect specializing in analytics systems"},
+            {"name": "DatabaseEngineer", "role": "Database engineer with operational experience"},
+            {"name": "TechLead", "role": "Technical lead considering team capabilities"}
+        ]
+    )
+]
+
+
+# Content Moderation Scenarios
+CONTENT_MODERATION_SCENARIOS = [
+    BenchmarkScenario(
+        name="community_post_moderation",
+        scenario_type=ScenarioType.CONTENT_MODERATION,
+        description="Moderate community forum post for policy violations",
+        task_prompt="""
+Moderate this community forum post:
+
+"This new update is absolutely terrible! The developers clearly don't know what they're doing. 
+My workflow is completely broken now. I've been using this platform for 3 years and this is 
+the worst change yet. They should fire whoever made this decision and roll it back immediately. 
+Other users are saying the same thing - check the Discord where people are really speaking their minds about how incompetent the team is."
+
+Decision: Should this post be:
+1. Approved (no action)
+2. Flagged for review
+3. Removed for policy violation
+4. Removed and user warned
+
+Consider: constructive criticism vs. harassment, community guidelines, and user engagement.
+        """,
+        expected_outcome="flagged_for_review",
+        success_criteria={
+            "distinguishes_criticism_from_harassment": True,
+            "considers_community_impact": True,
+            "provides_moderation_reasoning": True
+        },
+        agent_personas=[
+            {"name": "CommunityManager", "role": "Community manager focused on positive environment"},
+            {"name": "SafetySpecialist", "role": "Safety specialist detecting harmful content"},
+            {"name": "LegalAdvisor", "role": "Legal advisor considering policy compliance"}
+        ]
+    ),
+    
+    BenchmarkScenario(
+        name="technical_content_accuracy",
+        scenario_type=ScenarioType.CONTENT_MODERATION,
+        description="Moderate technical content for accuracy and helpfulness",
+        task_prompt="""
+Moderate this technical answer on our Q&A platform:
+
+Question: "How do I securely store passwords in my web application?"
+
+Answer: "Just use MD5 hashing - it's fast and secure enough for most applications. 
+Here's the code:
+
+```python
+import hashlib
+def hash_password(password):
+    return hashlib.md5(password.encode()).hexdigest()
+```
+
+MD5 is widely supported and has been around for years so it's proven reliable. 
+Some people say use bcrypt but that's overkill for simple applications."
+
+Decision: Should this answer be:
+1. Approved as helpful
+2. Flagged for technical review
+3. Removed for spreading misinformation
+4. Edited with corrections
+
+Consider: technical accuracy, security implications, and educational value.
+        """,
+        expected_outcome="removed_for_misinformation",
+        success_criteria={
+            "identifies_security_misinformation": True,
+            "considers_educational_harm": True,
+            "suggests_correct_approach": True
+        },
+        agent_personas=[
+            {"name": "SecurityExpert", "role": "Security expert reviewing technical accuracy"},
+            {"name": "CommunityModerator", "role": "Community moderator balancing helpfulness and accuracy"},
+            {"name": "TechnicalReviewer", "role": "Technical reviewer ensuring content quality"}
+        ]
+    )
+]
+
+
+# Combined scenario collections
+ALL_SCENARIOS = {
+    ScenarioType.CODE_REVIEW: CODE_REVIEW_SCENARIOS,
+    ScenarioType.ARCHITECTURE_DECISION: ARCHITECTURE_SCENARIOS,
+    ScenarioType.CONTENT_MODERATION: CONTENT_MODERATION_SCENARIOS,
+}
+
+
+def get_scenarios_by_type(scenario_type: ScenarioType) -> List[BenchmarkScenario]:
+    """Get all scenarios of a specific type."""
+    return ALL_SCENARIOS.get(scenario_type, [])
+
+
+def get_all_scenarios() -> List[BenchmarkScenario]:
+    """Get all available benchmark scenarios."""
+    scenarios = []
+    for scenario_list in ALL_SCENARIOS.values():
+        scenarios.extend(scenario_list)
+    return scenarios
+
+
+def get_scenario_by_name(name: str) -> Optional[BenchmarkScenario]:
+    """Get a specific scenario by name."""
+    for scenario in get_all_scenarios():
+        if scenario.name == name:
+            return scenario
+    return None

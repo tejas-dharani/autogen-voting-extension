@@ -1,0 +1,51 @@
+# Shared tasks for autogen-voting-extension (matches AutoGen's pattern)
+
+[tasks.fmt]
+help = "Format code with ruff"
+cmd = "ruff format ."
+
+[tasks.lint]
+help = "Lint code with ruff"
+cmd = "ruff check --fix ."
+
+[tasks.lint-ci]
+help = "Lint code for CI (no fixes applied)"
+cmd = "ruff check ."
+
+[tasks.pyright]
+help = "Run pyright type checker"
+cmd = "pyright src"
+
+[tasks.mypy]
+help = "Run mypy type checker"
+cmd = "mypy src"
+
+[tasks.test]
+help = "Run tests with coverage"
+cmd = "pytest -n auto --cov=src --cov-report=term-missing --cov-report=xml tests"
+
+[tasks.security]
+help = "Run security checks"
+cmd = "bandit -r src"
+
+[tasks.check]
+help = "Run all code quality checks (matches AutoGen's poe check)"
+sequence = [
+    "fmt",
+    "lint-ci", 
+    "pyright",
+    "mypy",
+    "test",
+    "security"
+]
+
+[tasks.build]
+help = "Build package"
+cmd = "python -m build"
+
+[tasks.clean]
+help = "Clean build artifacts"
+cmd = """
+rm -rf build/ dist/ *.egg-info/ .coverage htmlcov/ .pytest_cache/ .mypy_cache/ .ruff_cache/
+find . -name __pycache__ -exec rm -rf {} +
+"""
