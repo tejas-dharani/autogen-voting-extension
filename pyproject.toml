@@ -18,6 +18,7 @@ dependencies = [
     "autogen-agentchat>=0.4.0",
     "autogen-core>=0.4.0",
     "autogen-ext[openai]>=0.4.0",
+    "psutil>=6.0.0",
     "pydantic>=2.0.0",
     "typing-extensions>=4.0.0",
 ]

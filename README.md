@@ -44,10 +44,10 @@ pip install autogen-agentchat autogen-ext[openai]
 pip install autogen-voting-extension
 ```
 
-For benchmarking capabilities:
+For development and benchmarking:
 
 ```bash
-pip install autogen-voting-extension[benchmarks]
+pip install autogen-voting-extension[dev]
 ```
 
 For development:
