@@ -88,7 +88,7 @@ class BenchmarkMetrics:
 
     def save_to_file(self, filename: str) -> None:
         """Save metrics to JSON file."""
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
 
@@ -120,8 +120,10 @@ class ComparisonResults:
         return {
             "voting_active_agents": voting_participation,
             "standard_active_agents": standard_participation,
-            "voting_avg_messages_per_agent": sum(self.voting_metrics.agent_participation.values()) / max(voting_participation, 1),
-            "standard_avg_messages_per_agent": sum(self.standard_metrics.agent_participation.values()) / max(standard_participation, 1),
+            "voting_avg_messages_per_agent": sum(self.voting_metrics.agent_participation.values())
+            / max(voting_participation, 1),
+            "standard_avg_messages_per_agent": sum(self.standard_metrics.agent_participation.values())
+            / max(standard_participation, 1),
         }
 
     def to_dict(self) -> dict[str, Any]:
@@ -137,7 +139,7 @@ class ComparisonResults:
 
     def save_to_file(self, filename: str) -> None:
         """Save comparison results to JSON file."""
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
 

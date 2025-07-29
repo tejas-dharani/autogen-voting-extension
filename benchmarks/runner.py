@@ -36,11 +36,7 @@ class BenchmarkRunner:
         agents: list[AssistantAgent] = []
 
         for persona in personas:
-            agent = AssistantAgent(
-                name=persona["name"],
-                model_client=model_client,
-                system_message=persona["role"]
-            )
+            agent = AssistantAgent(name=persona["name"], model_client=model_client, system_message=persona["role"])
             agents.append(agent)
 
         return agents
@@ -51,7 +47,7 @@ class BenchmarkRunner:
         voting_method: VotingMethod = VotingMethod.MAJORITY,
         qualified_majority_threshold: float = 0.67,
         max_discussion_rounds: int = 2,
-        require_reasoning: bool = True
+        require_reasoning: bool = True,
     ) -> BenchmarkMetrics:
         """Run a scenario using VotingGroupChat."""
 
@@ -73,7 +69,7 @@ class BenchmarkRunner:
             result = await voting_team.run(task=scenario.task_prompt)
 
             # Extract voting results
-            voting_results = getattr(result, 'voting_results', None)
+            voting_results = getattr(result, "voting_results", None)
             if voting_results is not None:
                 for agent_name, vote in voting_results.items():
                     metrics.add_vote(agent_name, vote)
@@ -92,11 +88,7 @@ class BenchmarkRunner:
 
         return metrics
 
-    async def run_standard_scenario(
-        self,
-        scenario: BenchmarkScenario,
-        max_turns: int = 20
-    ) -> BenchmarkMetrics:
+    async def run_standard_scenario(self, scenario: BenchmarkScenario, max_turns: int = 20) -> BenchmarkMetrics:
         """Run a scenario using standard GroupChat."""
 
         agents = self.create_agents(scenario.agent_personas)
@@ -132,7 +124,7 @@ class BenchmarkRunner:
         self,
         scenario: BenchmarkScenario,
         voting_method: VotingMethod = VotingMethod.MAJORITY,
-        save_results: bool = True
+        save_results: bool = True,
     ) -> ComparisonResults:
         """Run a complete comparison between voting and standard approaches."""
 
@@ -151,7 +143,7 @@ class BenchmarkRunner:
             voting_metrics=voting_metrics,
             standard_metrics=standard_metrics,
             scenario_name=scenario.name,
-            scenario_description=scenario.description
+            scenario_description=scenario.description,
         )
 
         # Save results if requested
@@ -164,9 +156,7 @@ class BenchmarkRunner:
         return results
 
     async def run_all_scenarios(
-        self,
-        scenario_type: ScenarioType | None = None,
-        voting_methods: list[VotingMethod] | None = None
+        self, scenario_type: ScenarioType | None = None, voting_methods: list[VotingMethod] | None = None
     ) -> list[ComparisonResults]:
         """Run all scenarios with specified parameters."""
 
@@ -192,10 +182,10 @@ class BenchmarkRunner:
         summary_data: dict[str, Any] = {
             "total_scenarios": len(all_results),
             "timestamp": datetime.now().isoformat(),
-            "results": [result.to_dict() for result in all_results]
+            "results": [result.to_dict() for result in all_results],
         }
 
-        with open(summary_filename, 'w') as f:
+        with open(summary_filename, "w") as f:
             json.dump(summary_data, f, indent=2)
 
         print(f"Summary results saved to: {summary_filename}")
@@ -216,13 +206,13 @@ class BenchmarkRunner:
             "decision_quality": {
                 "voting_success_rate": 0.0,
                 "standard_success_rate": 0.0,
-            }
+            },
         }
 
         # Group by scenario type
         scenario_types: dict[str, list[ComparisonResults]] = {}
         for result in results:
-            scenario_type = result.scenario_name.split('_')[0]  # Simple grouping
+            scenario_type = result.scenario_name.split("_")[0]  # Simple grouping
             if scenario_type not in scenario_types:
                 scenario_types[scenario_type] = []
             scenario_types[scenario_type].append(result)

@@ -7,6 +7,7 @@ from typing import Any
 
 class ScenarioType(Enum):
     """Types of benchmark scenarios."""
+
     CODE_REVIEW = "code_review"
     ARCHITECTURE_DECISION = "architecture_decision"
     CONTENT_MODERATION = "content_moderation"
@@ -50,15 +51,14 @@ Decision: Should this code be approved for merge? Provide reasoning.
         success_criteria={
             "identifies_sql_injection": True,
             "identifies_plaintext_password": True,
-            "provides_security_reasoning": True
+            "provides_security_reasoning": True,
         },
         agent_personas=[
             {"name": "SecurityExpert", "role": "Security specialist focused on vulnerability detection"},
             {"name": "SeniorDev", "role": "Senior developer reviewing code quality and practices"},
-            {"name": "TeamLead", "role": "Team lead balancing security with delivery timelines"}
-        ]
+            {"name": "TeamLead", "role": "Team lead balancing security with delivery timelines"},
+        ],
     ),
-
     BenchmarkScenario(
         name="performance_optimization",
         scenario_type=ScenarioType.CODE_REVIEW,
@@ -88,15 +88,14 @@ Decision: Should this code be approved for merge? Focus on performance implicati
         success_criteria={
             "identifies_n_plus_one": True,
             "suggests_batch_processing": True,
-            "considers_scalability": True
+            "considers_scalability": True,
         },
         agent_personas=[
             {"name": "PerformanceEngineer", "role": "Performance engineer focused on scalability"},
             {"name": "DatabaseExpert", "role": "Database specialist reviewing query patterns"},
-            {"name": "ProductionEngineer", "role": "Production engineer considering operational impact"}
-        ]
+            {"name": "ProductionEngineer", "role": "Production engineer considering operational impact"},
+        ],
     ),
-
     BenchmarkScenario(
         name="code_quality_readability",
         scenario_type=ScenarioType.CODE_REVIEW,
@@ -122,14 +121,14 @@ Decision: Should this code be approved? Consider maintainability and clarity.
         success_criteria={
             "identifies_poor_naming": True,
             "suggests_refactoring": True,
-            "mentions_maintainability": True
+            "mentions_maintainability": True,
         },
         agent_personas=[
             {"name": "SeniorDev", "role": "Senior developer focused on code quality"},
             {"name": "CodeReviewer", "role": "Code reviewer specializing in maintainability"},
-            {"name": "JuniorMentor", "role": "Mentor helping junior developers learn best practices"}
-        ]
-    )
+            {"name": "JuniorMentor", "role": "Mentor helping junior developers learn best practices"},
+        ],
+    ),
 ]
 
 
@@ -157,15 +156,14 @@ Decision: Which approach should we take? Consider team size, complexity, and gro
             "considers_team_size": True,
             "addresses_complexity": True,
             "mentions_operational_overhead": True,
-            "provides_concrete_recommendation": True
+            "provides_concrete_recommendation": True,
         },
         agent_personas=[
             {"name": "SolutionArchitect", "role": "Solution architect with enterprise experience"},
             {"name": "TechLead", "role": "Technical lead familiar with current system"},
-            {"name": "DevOpsEngineer", "role": "DevOps engineer considering operational complexity"}
-        ]
+            {"name": "DevOpsEngineer", "role": "DevOps engineer considering operational complexity"},
+        ],
     ),
-
     BenchmarkScenario(
         name="database_technology_choice",
         scenario_type=ScenarioType.ARCHITECTURE_DECISION,
@@ -189,14 +187,14 @@ Decision: Which database architecture should we choose? Consider performance, co
             "analyzes_performance_requirements": True,
             "considers_operational_complexity": True,
             "addresses_team_expertise": True,
-            "provides_specific_recommendation": True
+            "provides_specific_recommendation": True,
         },
         agent_personas=[
             {"name": "DataArchitect", "role": "Data architect specializing in analytics systems"},
             {"name": "DatabaseEngineer", "role": "Database engineer with operational experience"},
-            {"name": "TechLead", "role": "Technical lead considering team capabilities"}
-        ]
-    )
+            {"name": "TechLead", "role": "Technical lead considering team capabilities"},
+        ],
+    ),
 ]
 
 
@@ -226,15 +224,14 @@ Consider: constructive criticism vs. harassment, community guidelines, and user 
         success_criteria={
             "distinguishes_criticism_from_harassment": True,
             "considers_community_impact": True,
-            "provides_moderation_reasoning": True
+            "provides_moderation_reasoning": True,
         },
         agent_personas=[
             {"name": "CommunityManager", "role": "Community manager focused on positive environment"},
             {"name": "SafetySpecialist", "role": "Safety specialist detecting harmful content"},
-            {"name": "LegalAdvisor", "role": "Legal advisor considering policy compliance"}
-        ]
+            {"name": "LegalAdvisor", "role": "Legal advisor considering policy compliance"},
+        ],
     ),
-
     BenchmarkScenario(
         name="technical_content_accuracy",
         scenario_type=ScenarioType.CONTENT_MODERATION,
@@ -268,14 +265,14 @@ Consider: technical accuracy, security implications, and educational value.
         success_criteria={
             "identifies_security_misinformation": True,
             "considers_educational_harm": True,
-            "suggests_correct_approach": True
+            "suggests_correct_approach": True,
         },
         agent_personas=[
             {"name": "SecurityExpert", "role": "Security expert reviewing technical accuracy"},
             {"name": "CommunityModerator", "role": "Community moderator balancing helpfulness and accuracy"},
-            {"name": "TechnicalReviewer", "role": "Technical reviewer ensuring content quality"}
-        ]
-    )
+            {"name": "TechnicalReviewer", "role": "Technical reviewer ensuring content quality"},
+        ],
+    ),
 ]
 
 
@@ -306,4 +303,3 @@ def get_scenario_by_name(name: str) -> BenchmarkScenario | None:
         if scenario.name == name:
             return scenario
     return None
-

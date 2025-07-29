@@ -33,11 +33,7 @@ async def run_single_benchmark():
         return
 
     # Run comparison
-    result = await runner.run_comparison(
-        scenario=scenario,
-        voting_method=VotingMethod.MAJORITY,
-        save_results=True
-    )
+    result = await runner.run_comparison(scenario=scenario, voting_method=VotingMethod.MAJORITY, save_results=True)
 
     print(f"\nResults for {scenario.name}:")
     print(f"Voting duration: {result.voting_metrics.duration_seconds:.2f}s")
@@ -59,8 +55,7 @@ async def run_code_review_benchmarks():
 
     # Run all code review scenarios
     results = await runner.run_all_scenarios(
-        scenario_type=ScenarioType.CODE_REVIEW,
-        voting_methods=[VotingMethod.MAJORITY, VotingMethod.QUALIFIED_MAJORITY]
+        scenario_type=ScenarioType.CODE_REVIEW, voting_methods=[VotingMethod.MAJORITY, VotingMethod.QUALIFIED_MAJORITY]
     )
 
     # Analyze results
@@ -88,21 +83,13 @@ async def compare_voting_methods():
         print("Scenario not found!")
         return
 
-    voting_methods = [
-        VotingMethod.MAJORITY,
-        VotingMethod.QUALIFIED_MAJORITY,
-        VotingMethod.UNANIMOUS
-    ]
+    voting_methods = [VotingMethod.MAJORITY, VotingMethod.QUALIFIED_MAJORITY, VotingMethod.UNANIMOUS]
 
     results: dict[str, ComparisonResults] = {}
 
     for method in voting_methods:
         print(f"\nRunning with {method.value}...")
-        result = await runner.run_comparison(
-            scenario=scenario,
-            voting_method=method,
-            save_results=False
-        )
+        result = await runner.run_comparison(scenario=scenario, voting_method=method, save_results=False)
         results[method.value] = result
 
     print("\n=== Voting Method Comparison Results ===")
@@ -142,7 +129,7 @@ def main():
         "--example",
         choices=["single", "code-review", "voting-methods", "scalability", "all"],
         default="single",
-        help="Which example to run"
+        help="Which example to run",
     )
 
     args = parser.parse_args()
@@ -162,4 +149,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

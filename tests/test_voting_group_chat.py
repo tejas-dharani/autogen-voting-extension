@@ -747,20 +747,14 @@ class TestVotingGroupChatAdvanced:
         """Test VoteContent validation and edge cases."""
         # Test valid vote content
         valid_vote = VoteContent(
-            vote=VoteType.APPROVE,
-            proposal_id="test-123",
-            reasoning="This is a good idea",
-            confidence=0.8
+            vote=VoteType.APPROVE, proposal_id="test-123", reasoning="This is a good idea", confidence=0.8
         )
         assert valid_vote.vote == VoteType.APPROVE
         assert valid_vote.confidence == 0.8
 
         # Test vote content with extreme confidence values
         extreme_vote = VoteContent(
-            vote=VoteType.REJECT,
-            proposal_id="test-456",
-            reasoning="Strong disagreement",
-            confidence=1.0
+            vote=VoteType.REJECT, proposal_id="test-456", reasoning="Strong disagreement", confidence=1.0
         )
         assert extreme_vote.confidence == 1.0
 
@@ -768,10 +762,7 @@ class TestVotingGroupChatAdvanced:
         """Test ProposalContent validation and edge cases."""
         # Test proposal with empty options
         proposal = ProposalContent(
-            proposal_id="test-empty",
-            title="Empty Options Test",
-            description="Testing with no options",
-            options=[]
+            proposal_id="test-empty", title="Empty Options Test", description="Testing with no options", options=[]
         )
         assert len(proposal.options) == 0
 
@@ -781,7 +772,7 @@ class TestVotingGroupChatAdvanced:
             proposal_id="test-large",
             title="Many Options Test",
             description="Testing with many options",
-            options=many_options
+            options=many_options,
         )
         assert len(large_proposal.options) == 10
 
@@ -790,7 +781,7 @@ class TestVotingGroupChatAdvanced:
         detailed_votes = {
             "Agent1": {"vote": "approve", "reasoning": "Good idea", "confidence": 0.9},
             "Agent2": {"vote": "reject", "reasoning": "Needs work", "confidence": 0.8},
-            "Agent3": {"vote": "abstain", "reasoning": "Not enough info", "confidence": 0.5}
+            "Agent3": {"vote": "abstain", "reasoning": "Not enough info", "confidence": 0.5},
         }
 
         result = VotingResult(
@@ -801,7 +792,7 @@ class TestVotingGroupChatAdvanced:
             total_voters=3,
             participation_rate=1.0,
             confidence_average=0.73,
-            detailed_votes=detailed_votes
+            detailed_votes=detailed_votes,
         )
 
         assert result.participation_rate == 1.0
@@ -817,9 +808,9 @@ class TestVotingGroupChatAdvanced:
                 vote=VoteType.ABSTAIN,
                 proposal_id="minimal",
                 reasoning="",  # Empty reasoning
-                confidence=0.0  # Zero confidence
+                confidence=0.0,  # Zero confidence
             ),
-            source="MinimalAgent"
+            source="MinimalAgent",
         )
 
         text = minimal_vote.to_model_text()
@@ -832,9 +823,9 @@ class TestVotingGroupChatAdvanced:
                 proposal_id="unicode-test",
                 title="测试提案",  # Chinese characters
                 description="Proposal with émojis 🚀 and spëcial chars",
-                options=["选项一", "Option B"]
+                options=["选项一", "Option B"],
             ),
-            source="UnicodeAgent"
+            source="UnicodeAgent",
         )
 
         text = unicode_proposal.to_model_text()

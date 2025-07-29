@@ -19,21 +19,9 @@ def mock_model_client() -> MagicMock:
 def sample_agents(mock_model_client: MagicMock) -> list[AssistantAgent]:
     """Create sample agents for testing."""
     return [
-        AssistantAgent(
-            "Agent1",
-            mock_model_client,
-            system_message="First agent for testing"
-        ),
-        AssistantAgent(
-            "Agent2",
-            mock_model_client,
-            system_message="Second agent for testing"
-        ),
-        AssistantAgent(
-            "Agent3",
-            mock_model_client,
-            system_message="Third agent for testing"
-        ),
+        AssistantAgent("Agent1", mock_model_client, system_message="First agent for testing"),
+        AssistantAgent("Agent2", mock_model_client, system_message="Second agent for testing"),
+        AssistantAgent("Agent3", mock_model_client, system_message="Third agent for testing"),
     ]
 
 

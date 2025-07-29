@@ -45,7 +45,7 @@ def create_scalable_personas(agent_count: int, domain: str = "code_review") -> l
             {"name": "PerformanceArchitect", "role": "Performance architect optimizing for scale"},
             {"name": "CostOptimizer", "role": "Cost optimization specialist managing technical debt"},
             {"name": "ComplianceOfficer", "role": "Compliance officer ensuring regulatory requirements"},
-        ]
+        ],
     }
 
     personas = base_personas.get(domain, base_personas["code_review"])
@@ -53,9 +53,7 @@ def create_scalable_personas(agent_count: int, domain: str = "code_review") -> l
 
 
 async def test_voting_scalability(
-    agent_counts: list[int],
-    voting_method: VotingMethod = VotingMethod.MAJORITY,
-    domain: str = "code_review"
+    agent_counts: list[int], voting_method: VotingMethod = VotingMethod.MAJORITY, domain: str = "code_review"
 ) -> dict[int, dict[str, Any]]:
     """Test voting performance with different numbers of agents."""
 
@@ -103,11 +101,7 @@ async def test_voting_scalability(
         agents: list[ChatAgent] = []
 
         for persona in personas:
-            agent = AssistantAgent(
-                name=persona["name"],
-                model_client=model_client,
-                system_message=persona["role"]
-            )
+            agent = AssistantAgent(name=persona["name"], model_client=model_client, system_message=persona["role"])
             agents.append(agent)
 
         # Create voting team
@@ -127,11 +121,7 @@ async def test_voting_scalability(
             end_time = asyncio.get_event_loop().time()
 
             duration = end_time - start_time
-            results[count] = {
-                "duration": duration,
-                "success": True,
-                "agents": count
-            }
+            results[count] = {"duration": duration, "success": True, "agents": count}
 
             print(f"  Completed in {duration:.2f} seconds")
             print("  Result available: True")
@@ -140,12 +130,7 @@ async def test_voting_scalability(
             end_time = asyncio.get_event_loop().time()
             duration = end_time - start_time
 
-            results[count] = {
-                "duration": duration,
-                "success": False,
-                "error": str(e),
-                "agents": count
-            }
+            results[count] = {"duration": duration, "success": False, "error": str(e), "agents": count}
 
             print(f"  Failed after {duration:.2f} seconds: {e}")
 
@@ -158,11 +143,7 @@ async def compare_voting_methods_by_scale() -> None:
     print("=== Voting Method Scalability Comparison ===")
 
     agent_counts = [3, 5, 7]
-    voting_methods = [
-        VotingMethod.MAJORITY,
-        VotingMethod.QUALIFIED_MAJORITY,
-        VotingMethod.UNANIMOUS
-    ]
+    voting_methods = [VotingMethod.MAJORITY, VotingMethod.QUALIFIED_MAJORITY, VotingMethod.UNANIMOUS]
 
     all_results: dict[str, dict[int, dict[str, Any]]] = {}
 
@@ -209,11 +190,7 @@ async def test_consensus_difficulty() -> None:
 
     agents: list[ChatAgent] = []
     for persona in personas:
-        agent = AssistantAgent(
-            name=persona["name"],
-            model_client=model_client,
-            system_message=persona["role"]
-        )
+        agent = AssistantAgent(name=persona["name"], model_client=model_client, system_message=persona["role"])
         agents.append(agent)
 
     # Test scenarios with different expected difficulty
@@ -221,18 +198,18 @@ async def test_consensus_difficulty() -> None:
         {
             "name": "Easy Consensus - Clear Bug Fix",
             "task": "Should we fix this obvious null pointer exception? Fix: add null check before accessing object.property",
-            "expected_difficulty": "easy"
+            "expected_difficulty": "easy",
         },
         {
             "name": "Medium Consensus - Performance vs Security Trade-off",
             "task": "Should we cache user authentication tokens in memory (faster) or validate each request (more secure)?",
-            "expected_difficulty": "medium"
+            "expected_difficulty": "medium",
         },
         {
             "name": "Hard Consensus - Architecture Decision",
             "task": "Should we rewrite our monolith as microservices? Consider: team size (5 people), complexity, deployment overhead, debugging difficulty",
-            "expected_difficulty": "hard"
-        }
+            "expected_difficulty": "hard",
+        },
     ]
 
     for scenario in scenarios:
@@ -273,7 +250,7 @@ def main() -> None:
         "--test",
         choices=["basic", "methods", "consensus", "all"],
         default="basic",
-        help="Which scalability test to run"
+        help="Which scalability test to run",
     )
 
     args = parser.parse_args()
@@ -290,4 +267,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

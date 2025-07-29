@@ -30,6 +30,7 @@ async def run_quick_test() -> bool:
 
         # Create a simple test scenario
         from benchmarks.scenarios import BenchmarkScenario
+
         test_scenario = BenchmarkScenario(
             name="quick_test",
             scenario_type=ScenarioType.CODE_REVIEW,
@@ -38,15 +39,13 @@ async def run_quick_test() -> bool:
             agent_personas=[
                 {"name": "Reviewer1", "role": "Code reviewer focused on correctness"},
                 {"name": "Reviewer2", "role": "Senior developer reviewing changes"},
-                {"name": "Reviewer3", "role": "Team lead making final decisions"}
-            ]
+                {"name": "Reviewer3", "role": "Team lead making final decisions"},
+            ],
         )
 
         print("Running quick comparison...")
         result = await runner.run_comparison(
-            scenario=test_scenario,
-            voting_method=VotingMethod.MAJORITY,
-            save_results=False
+            scenario=test_scenario, voting_method=VotingMethod.MAJORITY, save_results=False
         )
 
         print("✅ Quick test completed successfully!")
@@ -63,8 +62,7 @@ async def run_quick_test() -> bool:
 
 
 async def run_full_benchmarks(
-    scenario_types: list[ScenarioType] | None = None,
-    voting_methods: list[VotingMethod] | None = None
+    scenario_types: list[ScenarioType] | None = None, voting_methods: list[VotingMethod] | None = None
 ) -> list[ComparisonResults]:
     """Run comprehensive benchmarks."""
     print("=== Full Benchmark Suite ===")
@@ -84,10 +82,7 @@ async def run_full_benchmarks(
     if scenario_types:
         for scenario_type in scenario_types:
             print(f"\n--- Running {scenario_type.value} scenarios ---")
-            results = await runner.run_all_scenarios(
-                scenario_type=scenario_type,
-                voting_methods=voting_methods
-            )
+            results = await runner.run_all_scenarios(scenario_type=scenario_type, voting_methods=voting_methods)
             all_results.extend(results)
     else:
         print("--- Running all scenarios ---")
@@ -106,11 +101,11 @@ async def run_full_benchmarks(
 
     # Show scenario type breakdown
     print("\n=== Results by Scenario Type ===")
-    for scenario_type, results in analysis['scenario_types'].items():
+    for scenario_type, results in analysis["scenario_types"].items():
         print(f"{scenario_type}: {len(results)} comparisons")
         if results:
-            avg_time_ratio = sum(r.efficiency_comparison['time_ratio'] for r in results) / len(results)
-            avg_msg_ratio = sum(r.efficiency_comparison['message_ratio'] for r in results) / len(results)
+            avg_time_ratio = sum(r.efficiency_comparison["time_ratio"] for r in results) / len(results)
+            avg_msg_ratio = sum(r.efficiency_comparison["message_ratio"] for r in results) / len(results)
             print(f"  Avg time ratio: {avg_time_ratio:.2f}")
             print(f"  Avg message ratio: {avg_msg_ratio:.2f}")
 
@@ -127,6 +122,7 @@ async def run_scalability_test() -> None:
 
     # Run a basic scalability comparison
     from benchmarks.scenarios import get_scenario_by_name
+
     runner = BenchmarkRunner(model_name="gpt-4o-mini")
 
     scenario = get_scenario_by_name("bug_detection_security")
@@ -152,7 +148,7 @@ Examples:
   python run_benchmarks.py --moderation              # Content moderation only
   python run_benchmarks.py --scalability             # Scalability test
   python run_benchmarks.py --majority-only           # Only majority voting
-        """
+        """,
     )
 
     # Test options
@@ -206,10 +202,11 @@ Examples:
             sys.exit(1)
 
     if args.full or any([args.code_review, args.architecture, args.moderation]):
-        asyncio.run(run_full_benchmarks(
-            scenario_types=scenario_types if scenario_types else None,
-            voting_methods=voting_methods
-        ))
+        asyncio.run(
+            run_full_benchmarks(
+                scenario_types=scenario_types if scenario_types else None, voting_methods=voting_methods
+            )
+        )
 
     if args.scalability:
         asyncio.run(run_scalability_test())
