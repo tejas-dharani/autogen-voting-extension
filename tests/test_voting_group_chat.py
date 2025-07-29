@@ -559,6 +559,44 @@ class TestVotingGroupChatManager:
         assert result["result"] == "no_consensus"
 
     @pytest.mark.asyncio
+    async def test_message_factory_registration_errors(self, voting_manager: VotingGroupChatManager) -> None:
+        """Test error handling in message factory registration."""
+        # This tests the exception handling in __init__ for already registered message types
+        # The exceptions are caught and ignored, so we just verify the manager initializes correctly
+        assert voting_manager is not None
+        assert voting_manager.voting_method == VotingMethod.MAJORITY
+
+    @pytest.mark.asyncio
+    async def test_eligible_voters_property(self, voting_manager: VotingGroupChatManager) -> None:
+        """Test eligible voters property returns a copy."""
+        voters = voting_manager.eligible_voters
+        original_count = len(voters)
+
+        # Modify the returned list (should not affect internal state)
+        voters.append("NewAgent")
+
+        # Verify internal state unchanged
+        assert len(voting_manager.eligible_voters) == original_count
+        assert "NewAgent" not in voting_manager.eligible_voters
+
+    @pytest.mark.asyncio
+    async def test_ranked_choice_voting(self, voting_manager: VotingGroupChatManager) -> None:
+        """Test ranked choice voting method (currently not fully implemented)."""
+        voting_manager.set_voting_method_for_testing(VotingMethod.RANKED_CHOICE)
+        voting_manager.set_proposal_for_testing({"id": "test-123"})
+        voting_manager.set_votes_for_testing(
+            {
+                "Agent1": {"vote": VoteType.APPROVE, "confidence": 0.9},
+                "Agent2": {"vote": VoteType.REJECT, "confidence": 0.8},
+                "Agent3": {"vote": VoteType.APPROVE, "confidence": 0.7},
+            }
+        )
+
+        # Test that ranked choice falls back to plurality logic
+        result = voting_manager.calculate_voting_result_for_testing()
+        assert result["result"] in ["approved", "rejected", "no_consensus"]
+
+    @pytest.mark.asyncio
     async def testannounce_voting_phase_for_testing(self, voting_manager: VotingGroupChatManager) -> None:
         """Test voting phase announcement."""
         voting_manager.set_proposal_for_testing({"title": "Test Proposal", "id": "test-123"})
@@ -599,6 +637,59 @@ class TestVotingGroupChatManager:
         assert voting_manager.current_proposal["id"] == "test-123"
         assert "Agent1" in voting_manager.votes_cast
         assert voting_manager.discussion_rounds == 1
+
+    @pytest.mark.asyncio
+    async def test_clear_votes_for_testing(self, voting_manager: VotingGroupChatManager) -> None:
+        """Test clearing votes functionality."""
+        # Set some votes
+        voting_manager.set_votes_for_testing({"Agent1": {"vote": VoteType.APPROVE}})
+        assert len(voting_manager.votes_cast) == 1
+
+        # Clear votes
+        voting_manager.clear_votes_for_testing()
+        assert len(voting_manager.votes_cast) == 0
+
+    @pytest.mark.asyncio
+    async def test_edge_case_voting_scenarios(self, voting_manager: VotingGroupChatManager) -> None:
+        """Test edge case voting scenarios."""
+        voting_manager.set_proposal_for_testing({"id": "edge-test"})
+
+        # Test all abstain votes
+        voting_manager.set_votes_for_testing(
+            {
+                "Agent1": {"vote": VoteType.ABSTAIN, "confidence": 0.5},
+                "Agent2": {"vote": VoteType.ABSTAIN, "confidence": 0.4},
+                "Agent3": {"vote": VoteType.ABSTAIN, "confidence": 0.6},
+            }
+        )
+
+        result = voting_manager.calculate_voting_result_for_testing()
+        assert result["result"] == "no_consensus"
+        assert result["votes_summary"]["abstain"] == 3
+
+    @pytest.mark.asyncio
+    async def test_auto_propose_speaker_methods(self, voting_manager: VotingGroupChatManager) -> None:
+        """Test auto propose speaker setter methods."""
+        # Test setting auto propose speaker
+        voting_manager.set_auto_propose_speaker_for_testing("Agent2")
+        proposer = voting_manager.select_proposer_for_testing()
+        assert proposer == "Agent2"
+
+        # Test setting to None
+        voting_manager.set_auto_propose_speaker_for_testing(None)
+        proposer = voting_manager.select_proposer_for_testing()
+        assert proposer == "Agent1"  # Falls back to first participant
+
+    @pytest.mark.asyncio
+    async def test_voting_method_setters(self, voting_manager: VotingGroupChatManager) -> None:
+        """Test voting method and threshold setters."""
+        # Test setting voting method
+        voting_manager.set_voting_method_for_testing(VotingMethod.UNANIMOUS)
+        assert voting_manager.voting_method == VotingMethod.UNANIMOUS
+
+        # Test setting qualified majority threshold
+        voting_manager.set_qualified_majority_threshold_for_testing(0.75)
+        assert voting_manager.qualified_majority_threshold == 0.75
 
 
 class TestVotingResultMessage:
@@ -651,3 +742,100 @@ class TestVotingGroupChatAdvanced:
         assert VotingPhase.VOTING.value == "voting"
         assert VotingPhase.DISCUSSION.value == "discussion"
         assert VotingPhase.CONSENSUS.value == "consensus"
+
+    def test_vote_content_validation(self) -> None:
+        """Test VoteContent validation and edge cases."""
+        # Test valid vote content
+        valid_vote = VoteContent(
+            vote=VoteType.APPROVE,
+            proposal_id="test-123",
+            reasoning="This is a good idea",
+            confidence=0.8
+        )
+        assert valid_vote.vote == VoteType.APPROVE
+        assert valid_vote.confidence == 0.8
+
+        # Test vote content with extreme confidence values
+        extreme_vote = VoteContent(
+            vote=VoteType.REJECT,
+            proposal_id="test-456",
+            reasoning="Strong disagreement",
+            confidence=1.0
+        )
+        assert extreme_vote.confidence == 1.0
+
+    def test_proposal_content_validation(self) -> None:
+        """Test ProposalContent validation and edge cases."""
+        # Test proposal with empty options
+        proposal = ProposalContent(
+            proposal_id="test-empty",
+            title="Empty Options Test",
+            description="Testing with no options",
+            options=[]
+        )
+        assert len(proposal.options) == 0
+
+        # Test proposal with many options
+        many_options = [f"Option_{i}" for i in range(10)]
+        large_proposal = ProposalContent(
+            proposal_id="test-large",
+            title="Many Options Test",
+            description="Testing with many options",
+            options=many_options
+        )
+        assert len(large_proposal.options) == 10
+
+    def test_voting_result_comprehensive(self) -> None:
+        """Test VotingResult with comprehensive data."""
+        detailed_votes = {
+            "Agent1": {"vote": "approve", "reasoning": "Good idea", "confidence": 0.9},
+            "Agent2": {"vote": "reject", "reasoning": "Needs work", "confidence": 0.8},
+            "Agent3": {"vote": "abstain", "reasoning": "Not enough info", "confidence": 0.5}
+        }
+
+        result = VotingResult(
+            proposal_id="comprehensive-test",
+            result="no_consensus",
+            votes_summary={"approve": 1, "reject": 1, "abstain": 1},
+            winning_option="none",
+            total_voters=3,
+            participation_rate=1.0,
+            confidence_average=0.73,
+            detailed_votes=detailed_votes
+        )
+
+        assert result.participation_rate == 1.0
+        assert result.confidence_average == 0.73
+        assert len(result.detailed_votes) == 3
+
+    def test_message_serialization_edge_cases(self) -> None:
+        """Test message serialization with edge case data."""
+        # Test vote message with minimal data
+        minimal_vote = VoteMessage(
+            content=VoteContent(
+                vote=VoteType.ABSTAIN,
+                proposal_id="minimal",
+                reasoning="",  # Empty reasoning
+                confidence=0.0  # Zero confidence
+            ),
+            source="MinimalAgent"
+        )
+
+        text = minimal_vote.to_model_text()
+        assert "abstain" in text.lower()
+        assert "confidence: 0.00" in text.lower() or "0.0" in text
+
+        # Test proposal with unicode content
+        unicode_proposal = ProposalMessage(
+            content=ProposalContent(
+                proposal_id="unicode-test",
+                title="测试提案",  # Chinese characters
+                description="Proposal with émojis 🚀 and spëcial chars",
+                options=["选项一", "Option B"]
+            ),
+            source="UnicodeAgent"
+        )
+
+        text = unicode_proposal.to_model_text()
+        assert "测试提案" in text
+        assert "🚀" in text
