@@ -50,9 +50,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/your-username/autogen-voting-extension"
-Repository = "https://github.com/your-username/autogen-voting-extension.git"
-"Bug Tracker" = "https://github.com/your-username/autogen-voting-extension/issues"
+Homepage = "https://github.com/tejas-dharani/autogen-voting-extension"
+Repository = "https://github.com/tejas-dharani/autogen-voting-extension.git"
+"Bug Tracker" = "https://github.com/tejas-dharani/autogen-voting-extension/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/autogen_voting"]

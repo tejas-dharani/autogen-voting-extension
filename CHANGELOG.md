@@ -96,8 +96,6 @@ This is the initial release of the AutoGen Voting Extension, providing democrati
 
 For detailed usage instructions, see the [README.md](README.md) and check out the examples in the `/examples` directory.
 
-**Migration from AutoGen PR:**
-This extension was originally designed as a contribution to the Microsoft AutoGen repository but has been converted to a standalone extension package per maintainer guidance. All functionality remains intact with improved packaging and distribution.
 
 ---
 
