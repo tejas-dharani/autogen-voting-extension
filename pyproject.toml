@@ -92,3 +92,11 @@ include = "shared_tasks.toml"
 
 [tool.poe.tasks]
 test = "pytest -n auto --cov=src --cov-report=term-missing --cov-report=xml"
+
+[dependency-groups]
+benchmarks = [
+    "matplotlib>=3.10.3",
+    "numpy>=2.2.6",
+    "pandas>=2.3.1",
+    "seaborn>=0.13.2",
+]

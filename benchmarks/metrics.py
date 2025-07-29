@@ -1,9 +1,8 @@
 """Metrics collection and analysis for voting vs. standard group chat comparison."""
 
 import time
-import asyncio
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 import json
 
@@ -20,7 +19,7 @@ class BenchmarkMetrics:
     # Decision quality metrics
     decision_reached: bool = False
     consensus_type: Optional[str] = None  # "unanimous", "majority", "qualified_majority"
-    final_vote_counts: Dict[str, int] = field(default_factory=dict)
+    final_vote_counts: Dict[str, int] = field(default_factory=dict)  # type: ignore
     
     # Efficiency metrics
     total_messages: int = 0
@@ -29,8 +28,8 @@ class BenchmarkMetrics:
     api_calls: int = 0
     
     # Agent participation metrics
-    agent_participation: Dict[str, int] = field(default_factory=dict)  # message count per agent
-    voting_patterns: Dict[str, List[str]] = field(default_factory=dict)  # votes per agent
+    agent_participation: Dict[str, int] = field(default_factory=dict)  # type: ignore  # message count per agent
+    voting_patterns: Dict[str, List[str]] = field(default_factory=dict)  # type: ignore  # votes per agent
     
     # Process metrics
     abstentions: int = 0
@@ -38,7 +37,7 @@ class BenchmarkMetrics:
     tie_breaks: int = 0
     
     # Custom metrics
-    custom_metrics: Dict[str, Any] = field(default_factory=dict)
+    custom_metrics: Dict[str, Any] = field(default_factory=dict)  # type: ignore
     
     def complete_benchmark(self) -> None:
         """Mark benchmark as complete and calculate duration."""

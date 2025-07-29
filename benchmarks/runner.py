@@ -1,7 +1,6 @@
 """Benchmark runner for comparing VotingGroupChat vs standard GroupChat."""
 
 import asyncio
-import time
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import json
@@ -33,7 +32,7 @@ class BenchmarkRunner:
     def create_agents(self, personas: List[Dict[str, str]]) -> List[AssistantAgent]:
         """Create agents based on persona specifications."""
         model_client = self.create_model_client()
-        agents = []
+        agents: List[AssistantAgent] = []
         
         for persona in personas:
             agent = AssistantAgent(
@@ -58,9 +57,9 @@ class BenchmarkRunner:
         agents = self.create_agents(scenario.agent_personas)
         metrics = self.metrics_collector.start_collection()
         
-        # Configure voting team
+        # Configure voting team  
         voting_team = VotingGroupChat(
-            participants=agents,
+            participants=agents,  # type: ignore
             voting_method=voting_method,
             qualified_majority_threshold=qualified_majority_threshold,
             require_reasoning=require_reasoning,
@@ -73,8 +72,9 @@ class BenchmarkRunner:
             result = await voting_team.run(task=scenario.task_prompt)
             
             # Extract voting results
-            if hasattr(result, 'voting_results'):
-                for agent_name, vote in result.voting_results.items():
+            voting_results = getattr(result, 'voting_results', None)
+            if voting_results is not None:
+                for agent_name, vote in voting_results.items():
                     metrics.add_vote(agent_name, vote)
                 metrics.decision_reached = True
                 metrics.consensus_type = voting_method.value
@@ -103,13 +103,13 @@ class BenchmarkRunner:
         
         # Configure standard group chat (using RoundRobinGroupChat as standard comparison)
         standard_team = RoundRobinGroupChat(
-            participants=agents,
+            participants=agents,  # type: ignore
             termination_condition=MaxMessageTermination(max_turns),
         )
         
         try:
             # Run the scenario
-            result = await standard_team.run(task=scenario.task_prompt)
+            _ = await standard_team.run(task=scenario.task_prompt)
             
             # Basic completion tracking
             metrics.decision_reached = True
@@ -165,7 +165,7 @@ class BenchmarkRunner:
     async def run_all_scenarios(
         self,
         scenario_type: Optional[ScenarioType] = None,
-        voting_methods: List[VotingMethod] = None
+        voting_methods: Optional[List[VotingMethod]] = None
     ) -> List[ComparisonResults]:
         """Run all scenarios with specified parameters."""
         
@@ -176,7 +176,7 @@ class BenchmarkRunner:
         if scenario_type:
             scenarios = [s for s in scenarios if s.scenario_type == scenario_type]
         
-        all_results = []
+        all_results: List[ComparisonResults] = []
         
         for scenario in scenarios:
             for voting_method in voting_methods:
@@ -188,7 +188,7 @@ class BenchmarkRunner:
         
         # Save summary results
         summary_filename = self.results_dir / f"benchmark_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        summary_data = {
+        summary_data: Dict[str, Any] = {
             "total_scenarios": len(all_results),
             "timestamp": datetime.now().isoformat(),
             "results": [result.to_dict() for result in all_results]
@@ -203,27 +203,29 @@ class BenchmarkRunner:
     def analyze_results(self, results: List[ComparisonResults]) -> Dict[str, Any]:
         """Analyze benchmark results and provide insights."""
         
-        analysis = {
+        analysis: Dict[str, Any] = {
             "total_comparisons": len(results),
             "scenario_types": {},
             "voting_method_performance": {},
             "efficiency_metrics": {
-                "avg_time_ratio": 0,
-                "avg_message_ratio": 0,
-                "avg_token_ratio": 0,
+                "avg_time_ratio": 0.0,
+                "avg_message_ratio": 0.0,
+                "avg_token_ratio": 0.0,
             },
             "decision_quality": {
-                "voting_success_rate": 0,
-                "standard_success_rate": 0,
+                "voting_success_rate": 0.0,
+                "standard_success_rate": 0.0,
             }
         }
         
         # Group by scenario type
+        scenario_types: Dict[str, List[ComparisonResults]] = {}
         for result in results:
             scenario_type = result.scenario_name.split('_')[0]  # Simple grouping
-            if scenario_type not in analysis["scenario_types"]:
-                analysis["scenario_types"][scenario_type] = []
-            analysis["scenario_types"][scenario_type].append(result)
+            if scenario_type not in scenario_types:
+                scenario_types[scenario_type] = []
+            scenario_types[scenario_type].append(result)
+        analysis["scenario_types"] = scenario_types
         
         # Calculate efficiency averages
         if results:
@@ -231,16 +233,20 @@ class BenchmarkRunner:
             message_ratios = [r.efficiency_comparison["message_ratio"] for r in results]
             token_ratios = [r.efficiency_comparison["token_ratio"] for r in results]
             
-            analysis["efficiency_metrics"]["avg_time_ratio"] = sum(time_ratios) / len(time_ratios)
-            analysis["efficiency_metrics"]["avg_message_ratio"] = sum(message_ratios) / len(message_ratios)
-            analysis["efficiency_metrics"]["avg_token_ratio"] = sum(token_ratios) / len(token_ratios)
+            efficiency_metrics = analysis["efficiency_metrics"]
+            if isinstance(efficiency_metrics, dict):
+                efficiency_metrics["avg_time_ratio"] = float(sum(time_ratios) / len(time_ratios))
+                efficiency_metrics["avg_message_ratio"] = float(sum(message_ratios) / len(message_ratios))
+                efficiency_metrics["avg_token_ratio"] = float(sum(token_ratios) / len(token_ratios))
             
             # Decision quality
             voting_successes = sum(1 for r in results if r.voting_metrics.decision_reached)
             standard_successes = sum(1 for r in results if r.standard_metrics.decision_reached)
             
-            analysis["decision_quality"]["voting_success_rate"] = voting_successes / len(results)
-            analysis["decision_quality"]["standard_success_rate"] = standard_successes / len(results)
+            decision_quality = analysis["decision_quality"]
+            if isinstance(decision_quality, dict):
+                decision_quality["voting_success_rate"] = float(voting_successes / len(results))
+                decision_quality["standard_success_rate"] = float(standard_successes / len(results))
         
         return analysis
 

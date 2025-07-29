@@ -21,8 +21,8 @@ class BenchmarkScenario:
     description: str
     task_prompt: str
     expected_outcome: str | None = None
-    success_criteria: dict[str, Any] = field(default_factory=dict)
-    agent_personas: list[dict[str, str]] = field(default_factory=list)
+    success_criteria: dict[str, Any] = field(default_factory=dict)  # type: ignore
+    agent_personas: list[dict[str, str]] = field(default_factory=list)  # type: ignore
 
 
 # Code Review Scenarios

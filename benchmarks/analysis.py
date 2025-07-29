@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import numpy as np
 from datetime import datetime
 
@@ -23,7 +23,7 @@ class BenchmarkAnalyzer:
     
     def load_results(self, pattern: str = "*.json") -> List[Dict[str, Any]]:
         """Load all result files matching the pattern."""
-        results = []
+        results: List[Dict[str, Any]] = []
         
         for file_path in self.results_dir.glob(pattern):
             try:
@@ -37,15 +37,15 @@ class BenchmarkAnalyzer:
         
         return results
     
-    def create_efficiency_comparison_chart(self, results: List[Dict[str, Any]], save_path: str = None):
+    def create_efficiency_comparison_chart(self, results: List[Dict[str, Any]], save_path: str | None = None) -> Any:
         """Create efficiency comparison charts."""
         
         # Extract efficiency data
-        scenarios = []
-        time_ratios = []
-        message_ratios = []
-        token_ratios = []
-        voting_methods = []
+        scenarios: List[str] = []
+        time_ratios: List[float] = []
+        message_ratios: List[float] = []
+        token_ratios: List[float] = []
+        voting_methods: List[str] = []
         
         for result in results:
             if 'efficiency_comparison' in result:
@@ -72,8 +72,8 @@ class BenchmarkAnalyzer:
         })
         
         # Create subplots
-        fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-        fig.suptitle('Voting vs Standard GroupChat Efficiency Comparison', fontsize=16)
+        fig, axes = plt.subplots(2, 2, figsize=(15, 12))  # type: ignore
+        fig.suptitle('Voting vs Standard GroupChat Efficiency Comparison', fontsize=16)  # type: ignore
         
         # Time ratio comparison
         sns.barplot(data=df, x='Scenario', y='Time Ratio', hue='Voting Method', ax=axes[0,0])
@@ -109,17 +109,17 @@ class BenchmarkAnalyzer:
         plt.tight_layout()
         
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')  # type: ignore
             print(f"Efficiency comparison chart saved to: {save_path}")
         
-        plt.show()
+        plt.show()  # type: ignore
         return fig
     
-    def create_voting_method_comparison(self, results: List[Dict[str, Any]], save_path: str = None):
+    def create_voting_method_comparison(self, results: List[Dict[str, Any]], save_path: str | None = None) -> Any:
         """Compare performance across different voting methods."""
         
         # Group results by voting method
-        method_data = {'majority': [], 'qualified_majority': [], 'unanimous': []}
+        method_data: Dict[str, List[Dict[str, Any]]] = {'majority': [], 'qualified_majority': [], 'unanimous': []}
         
         for result in results:
             method = 'majority'  # default
@@ -137,12 +137,12 @@ class BenchmarkAnalyzer:
                 })
         
         # Create comparison plots
-        fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-        fig.suptitle('Voting Method Performance Comparison', fontsize=16)
+        fig, axes = plt.subplots(2, 2, figsize=(15, 10))  # type: ignore
+        fig.suptitle('Voting Method Performance Comparison', fontsize=16)  # type: ignore
         
         # Duration comparison
-        durations = []
-        methods = []
+        durations: List[float] = []
+        methods: List[str] = []
         for method, data in method_data.items():
             for item in data:
                 durations.append(item['duration'])
@@ -153,8 +153,8 @@ class BenchmarkAnalyzer:
         axes[0,0].set_ylabel('Duration (seconds)')
         
         # Message count comparison
-        messages = []
-        methods_msg = []
+        messages: List[int] = []
+        methods_msg: List[str] = []
         for method, data in method_data.items():
             for item in data:
                 messages.append(item['messages'])
@@ -165,7 +165,7 @@ class BenchmarkAnalyzer:
         axes[0,1].set_ylabel('Message Count')
         
         # Success rate comparison
-        success_rates = {}
+        success_rates: Dict[str, float] = {}
         for method, data in method_data.items():
             if data:
                 success_rate = sum(1 for item in data if item['decision_reached']) / len(data)
@@ -177,17 +177,17 @@ class BenchmarkAnalyzer:
         axes[1,0].set_ylim(0, 1.1)
         
         # Average performance radar
-        methods_clean = list(success_rates.keys())
-        avg_durations = []
-        avg_messages = []
+        methods_clean: List[str] = list(success_rates.keys())
+        avg_durations: List[float] = []
+        avg_messages: List[float] = []
         
         for method in ['majority', 'qualified_majority', 'unanimous']:
             if method_data[method]:
-                avg_durations.append(np.mean([item['duration'] for item in method_data[method]]))
-                avg_messages.append(np.mean([item['messages'] for item in method_data[method]]))
+                avg_durations.append(float(np.mean([item['duration'] for item in method_data[method]])))
+                avg_messages.append(float(np.mean([item['messages'] for item in method_data[method]])))
             else:
-                avg_durations.append(0)
-                avg_messages.append(0)
+                avg_durations.append(0.0)
+                avg_messages.append(0.0)
         
         x = np.arange(len(methods_clean))
         width = 0.35
@@ -202,17 +202,17 @@ class BenchmarkAnalyzer:
         plt.tight_layout()
         
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')  # type: ignore
             print(f"Voting method comparison chart saved to: {save_path}")
         
-        plt.show()
+        plt.show()  # type: ignore
         return fig
     
-    def create_scenario_analysis(self, results: List[Dict[str, Any]], save_path: str = None):
+    def create_scenario_analysis(self, results: List[Dict[str, Any]], save_path: str | None = None) -> Any:
         """Analyze performance across different scenario types."""
         
         # Group by scenario type
-        scenario_types = {}
+        scenario_types: Dict[str, List[Dict[str, Any]]] = {}
         
         for result in results:
             scenario_name = result.get('scenario_name', 'Unknown')
@@ -231,12 +231,12 @@ class BenchmarkAnalyzer:
                 })
         
         # Create analysis plots
-        fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-        fig.suptitle('Performance Analysis by Scenario Type', fontsize=16)
+        fig, axes = plt.subplots(2, 2, figsize=(15, 10))  # type: ignore
+        fig.suptitle('Performance Analysis by Scenario Type', fontsize=16)  # type: ignore
         
         # Time ratio by scenario type
-        time_data = []
-        scenario_labels = []
+        time_data: List[float] = []
+        scenario_labels: List[str] = []
         for scenario_type, data in scenario_types.items():
             for item in data:
                 time_data.append(item['time_ratio'])
@@ -248,7 +248,7 @@ class BenchmarkAnalyzer:
         axes[0,0].axhline(y=1.0, color='red', linestyle='--', alpha=0.7)
         
         # Success rate comparison
-        success_comparison = {}
+        success_comparison: Dict[str, Dict[str, float]] = {}
         for scenario_type, data in scenario_types.items():
             if data:
                 voting_success = sum(1 for item in data if item['voting_success']) / len(data)
@@ -267,14 +267,14 @@ class BenchmarkAnalyzer:
         axes[0,1].tick_params(axis='x', rotation=45)
         
         # Efficiency heatmap
-        efficiency_matrix = []
-        scenario_names = []
+        efficiency_matrix: List[List[float]] = []
+        scenario_names: List[str] = []
         
         for scenario_type, data in scenario_types.items():
             if data:
-                avg_time = np.mean([item['time_ratio'] for item in data])
-                avg_message = np.mean([item['message_ratio'] for item in data])
-                avg_token = np.mean([item['token_ratio'] for item in data])
+                avg_time = float(np.mean([item['time_ratio'] for item in data]))
+                avg_message = float(np.mean([item['message_ratio'] for item in data]))
+                avg_token = float(np.mean([item['token_ratio'] for item in data]))
                 
                 efficiency_matrix.append([avg_time, avg_message, avg_token])
                 scenario_names.append(scenario_type.title())
@@ -286,7 +286,7 @@ class BenchmarkAnalyzer:
                 columns=['Time Ratio', 'Message Ratio', 'Token Ratio']
             )
             
-            sns.heatmap(efficiency_df, annot=True, fmt='.2f', ax=axes[1,0], cmap='RdYlBu_r')
+            sns.heatmap(efficiency_df, annot=True, fmt='.2f', ax=axes[1,0], cmap='RdYlBu_r')  # type: ignore
             axes[1,0].set_title('Average Efficiency Ratios by Scenario Type')
         
         # Performance scatter
@@ -305,20 +305,20 @@ class BenchmarkAnalyzer:
         plt.tight_layout()
         
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')  # type: ignore
             print(f"Scenario analysis chart saved to: {save_path}")
         
-        plt.show()
+        plt.show()  # type: ignore
         return fig
     
-    def generate_summary_report(self, results: List[Dict[str, Any]], output_file: str = None):
+    def generate_summary_report(self, results: List[Dict[str, Any]], output_file: str | None = None) -> str:
         """Generate a comprehensive summary report."""
         
         if not results:
             print("No results to analyze.")
-            return
+            return ""
         
-        report = []
+        report: List[str] = []
         report.append("# AutoGen Voting Extension Benchmark Report")
         report.append(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         report.append(f"Total Comparisons: {len(results)}")
