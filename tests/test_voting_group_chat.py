@@ -806,6 +806,7 @@ class TestVotingGroupChatAdvanced:
 
         assert result.participation_rate == 1.0
         assert result.confidence_average == 0.73
+        assert result.detailed_votes is not None
         assert len(result.detailed_votes) == 3
 
     def test_message_serialization_edge_cases(self) -> None:
