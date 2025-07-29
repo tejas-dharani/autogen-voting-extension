@@ -1,8 +1,8 @@
 """Benchmark scenarios for comparing voting vs standard group chat approaches."""
 
-from dataclasses import dataclass
-from typing import List, Dict, Any, Optional
+from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 
 class ScenarioType(Enum):
@@ -15,20 +15,14 @@ class ScenarioType(Enum):
 @dataclass
 class BenchmarkScenario:
     """Definition of a benchmark scenario for testing."""
-    
+
     name: str
     scenario_type: ScenarioType
     description: str
     task_prompt: str
-    expected_outcome: Optional[str] = None
-    success_criteria: Dict[str, Any] = None
-    agent_personas: List[Dict[str, str]] = None
-    
-    def __post_init__(self):
-        if self.success_criteria is None:
-            self.success_criteria = {}
-        if self.agent_personas is None:
-            self.agent_personas = []
+    expected_outcome: str | None = None
+    success_criteria: dict[str, Any] = field(default_factory=dict)
+    agent_personas: list[dict[str, str]] = field(default_factory=list)
 
 
 # Code Review Scenarios
@@ -64,7 +58,7 @@ Decision: Should this code be approved for merge? Provide reasoning.
             {"name": "TeamLead", "role": "Team lead balancing security with delivery timelines"}
         ]
     ),
-    
+
     BenchmarkScenario(
         name="performance_optimization",
         scenario_type=ScenarioType.CODE_REVIEW,
@@ -79,7 +73,7 @@ def process_user_data(user_ids):
         user = db.query(f"SELECT * FROM users WHERE id = {user_id}")
         profile = db.query(f"SELECT * FROM profiles WHERE user_id = {user_id}")
         stats = db.query(f"SELECT * FROM user_stats WHERE user_id = {user_id}")
-        
+
         results.append({
             'user': user,
             'profile': profile,
@@ -102,7 +96,7 @@ Decision: Should this code be approved for merge? Focus on performance implicati
             {"name": "ProductionEngineer", "role": "Production engineer considering operational impact"}
         ]
     ),
-    
+
     BenchmarkScenario(
         name="code_quality_readability",
         scenario_type=ScenarioType.CODE_REVIEW,
@@ -115,7 +109,7 @@ def calc(x, y, z, op):
     if op == 1:
         return x + y * z if z > 0 else x + y
     elif op == 2:
-        return x - y * z if z > 0 else x - y  
+        return x - y * z if z > 0 else x - y
     elif op == 3:
         return x * y * z if z > 0 else x * y
     else:
@@ -171,7 +165,7 @@ Decision: Which approach should we take? Consider team size, complexity, and gro
             {"name": "DevOpsEngineer", "role": "DevOps engineer considering operational complexity"}
         ]
     ),
-    
+
     BenchmarkScenario(
         name="database_technology_choice",
         scenario_type=ScenarioType.ARCHITECTURE_DECISION,
@@ -215,9 +209,9 @@ CONTENT_MODERATION_SCENARIOS = [
         task_prompt="""
 Moderate this community forum post:
 
-"This new update is absolutely terrible! The developers clearly don't know what they're doing. 
-My workflow is completely broken now. I've been using this platform for 3 years and this is 
-the worst change yet. They should fire whoever made this decision and roll it back immediately. 
+"This new update is absolutely terrible! The developers clearly don't know what they're doing.
+My workflow is completely broken now. I've been using this platform for 3 years and this is
+the worst change yet. They should fire whoever made this decision and roll it back immediately.
 Other users are saying the same thing - check the Discord where people are really speaking their minds about how incompetent the team is."
 
 Decision: Should this post be:
@@ -240,7 +234,7 @@ Consider: constructive criticism vs. harassment, community guidelines, and user 
             {"name": "LegalAdvisor", "role": "Legal advisor considering policy compliance"}
         ]
     ),
-    
+
     BenchmarkScenario(
         name="technical_content_accuracy",
         scenario_type=ScenarioType.CONTENT_MODERATION,
@@ -250,7 +244,7 @@ Moderate this technical answer on our Q&A platform:
 
 Question: "How do I securely store passwords in my web application?"
 
-Answer: "Just use MD5 hashing - it's fast and secure enough for most applications. 
+Answer: "Just use MD5 hashing - it's fast and secure enough for most applications.
 Here's the code:
 
 ```python
@@ -259,7 +253,7 @@ def hash_password(password):
     return hashlib.md5(password.encode()).hexdigest()
 ```
 
-MD5 is widely supported and has been around for years so it's proven reliable. 
+MD5 is widely supported and has been around for years so it's proven reliable.
 Some people say use bcrypt but that's overkill for simple applications."
 
 Decision: Should this answer be:
@@ -293,22 +287,23 @@ ALL_SCENARIOS = {
 }
 
 
-def get_scenarios_by_type(scenario_type: ScenarioType) -> List[BenchmarkScenario]:
+def get_scenarios_by_type(scenario_type: ScenarioType) -> list[BenchmarkScenario]:
     """Get all scenarios of a specific type."""
     return ALL_SCENARIOS.get(scenario_type, [])
 
 
-def get_all_scenarios() -> List[BenchmarkScenario]:
+def get_all_scenarios() -> list[BenchmarkScenario]:
     """Get all available benchmark scenarios."""
-    scenarios = []
+    scenarios: list[BenchmarkScenario] = []
     for scenario_list in ALL_SCENARIOS.values():
         scenarios.extend(scenario_list)
     return scenarios
 
 
-def get_scenario_by_name(name: str) -> Optional[BenchmarkScenario]:
+def get_scenario_by_name(name: str) -> BenchmarkScenario | None:
     """Get a specific scenario by name."""
     for scenario in get_all_scenarios():
         if scenario.name == name:
             return scenario
     return None
+

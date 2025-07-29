@@ -2,23 +2,25 @@
 
 import asyncio
 import os
-from pathlib import Path
-from typing import List, Dict
 
 # Add the src directory to the path
 import sys
+from pathlib import Path
+from typing import Any
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.base import ChatAgent
 from autogen_agentchat.conditions import MaxMessageTermination
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from autogen_voting import VotingGroupChat, VotingMethod
 
 
-def create_scalable_personas(agent_count: int, domain: str = "code_review") -> List[Dict[str, str]]:
+def create_scalable_personas(agent_count: int, domain: str = "code_review") -> list[dict[str, str]]:
     """Create persona configurations for different agent counts."""
-    
+
     base_personas = {
         "code_review": [
             {"name": "SeniorDev", "role": "Senior developer focused on architecture and best practices"},
@@ -45,28 +47,28 @@ def create_scalable_personas(agent_count: int, domain: str = "code_review") -> L
             {"name": "ComplianceOfficer", "role": "Compliance officer ensuring regulatory requirements"},
         ]
     }
-    
+
     personas = base_personas.get(domain, base_personas["code_review"])
     return personas[:agent_count]
 
 
 async def test_voting_scalability(
-    agent_counts: List[int],
+    agent_counts: list[int],
     voting_method: VotingMethod = VotingMethod.MAJORITY,
     domain: str = "code_review"
-):
+) -> dict[int, dict[str, Any]]:
     """Test voting performance with different numbers of agents."""
-    
+
     if not os.getenv("OPENAI_API_KEY"):
         print("Please set OPENAI_API_KEY environment variable")
-        return
-    
+        return {}
+
     model_client = OpenAIChatCompletionClient(model="gpt-4o-mini")
-    
+
     # Code review task
     task = """
     Review this code change for merge approval:
-    
+
     ```python
     def process_payments(payments):
         results = []
@@ -87,19 +89,19 @@ async def test_voting_scalability(
             results.append(result)
         return results
     ```
-    
+
     Decision: Should this code be approved for merge? Consider security, performance, and maintainability.
     """
-    
-    results = {}
-    
+
+    results: dict[int, dict[str, Any]] = {}
+
     for count in agent_counts:
         print(f"\n=== Testing with {count} agents ===")
-        
+
         # Create agents
         personas = create_scalable_personas(count, domain)
-        agents = []
-        
+        agents: list[ChatAgent] = []
+
         for persona in personas:
             agent = AssistantAgent(
                 name=persona["name"],
@@ -107,7 +109,7 @@ async def test_voting_scalability(
                 system_message=persona["role"]
             )
             agents.append(agent)
-        
+
         # Create voting team
         voting_team = VotingGroupChat(
             participants=agents,
@@ -116,86 +118,86 @@ async def test_voting_scalability(
             max_discussion_rounds=2,
             termination_condition=MaxMessageTermination(50),
         )
-        
+
         # Measure performance
         start_time = asyncio.get_event_loop().time()
-        
+
         try:
-            result = await voting_team.run(task=task)
+            await voting_team.run(task=task)
             end_time = asyncio.get_event_loop().time()
-            
+
             duration = end_time - start_time
             results[count] = {
                 "duration": duration,
                 "success": True,
                 "agents": count
             }
-            
+
             print(f"  Completed in {duration:.2f} seconds")
-            print(f"  Result available: {result is not None}")
-            
+            print("  Result available: True")
+
         except Exception as e:
             end_time = asyncio.get_event_loop().time()
             duration = end_time - start_time
-            
+
             results[count] = {
                 "duration": duration,
                 "success": False,
                 "error": str(e),
                 "agents": count
             }
-            
+
             print(f"  Failed after {duration:.2f} seconds: {e}")
-    
+
     return results
 
 
-async def compare_voting_methods_by_scale():
+async def compare_voting_methods_by_scale() -> None:
     """Compare how different voting methods perform at scale."""
-    
+
     print("=== Voting Method Scalability Comparison ===")
-    
+
     agent_counts = [3, 5, 7]
     voting_methods = [
         VotingMethod.MAJORITY,
         VotingMethod.QUALIFIED_MAJORITY,
         VotingMethod.UNANIMOUS
     ]
-    
-    all_results = {}
-    
+
+    all_results: dict[str, dict[int, dict[str, Any]]] = {}
+
     for method in voting_methods:
         print(f"\n--- Testing {method.value} ---")
         results = await test_voting_scalability(agent_counts, method)
         all_results[method.value] = results
-    
+
     # Print comparison
     print("\n=== Scalability Comparison Results ===")
     print(f"{'Method':<20} {'3 Agents':<12} {'5 Agents':<12} {'7 Agents':<12}")
     print("-" * 60)
-    
+
     for method_name, results in all_results.items():
-        durations = []
+        durations: list[str] = []
         for count in agent_counts:
             if count in results and results[count]["success"]:
                 durations.append(f"{results[count]['duration']:.1f}s")
             else:
                 durations.append("FAILED")
-        
+
         print(f"{method_name:<20} {durations[0]:<12} {durations[1]:<12} {durations[2]:<12}")
 
 
-async def test_consensus_difficulty():
+async def test_consensus_difficulty() -> None:
     """Test how different scenarios affect consensus difficulty."""
-    
+
     print("=== Consensus Difficulty Testing ===")
-    
+
     if not os.getenv("OPENAI_API_KEY"):
         print("Please set OPENAI_API_KEY environment variable")
         return
-    
+
     model_client = OpenAIChatCompletionClient(model="gpt-4o-mini")
-    
+
     # Create diverse agent perspectives
     personas = [
         {"name": "SecurityFirst", "role": "Security-first developer who prioritizes safety over speed"},
@@ -204,8 +206,8 @@ async def test_consensus_difficulty():
         {"name": "QualityGuardian", "role": "Quality-focused developer who prioritizes maintainability"},
         {"name": "PragmaticDev", "role": "Pragmatic developer who balances all concerns equally"},
     ]
-    
-    agents = []
+
+    agents: list[ChatAgent] = []
     for persona in personas:
         agent = AssistantAgent(
             name=persona["name"],
@@ -213,7 +215,7 @@ async def test_consensus_difficulty():
             system_message=persona["role"]
         )
         agents.append(agent)
-    
+
     # Test scenarios with different expected difficulty
     scenarios = [
         {
@@ -232,11 +234,11 @@ async def test_consensus_difficulty():
             "expected_difficulty": "hard"
         }
     ]
-    
+
     for scenario in scenarios:
         print(f"\n--- {scenario['name']} ---")
         print(f"Expected difficulty: {scenario['expected_difficulty']}")
-        
+
         # Test with different voting methods
         for method in [VotingMethod.MAJORITY, VotingMethod.UNANIMOUS]:
             voting_team = VotingGroupChat(
@@ -246,26 +248,26 @@ async def test_consensus_difficulty():
                 max_discussion_rounds=3,
                 termination_condition=MaxMessageTermination(40),
             )
-            
+
             start_time = asyncio.get_event_loop().time()
-            
+
             try:
-                result = await voting_team.run(task=scenario["task"])
+                await voting_team.run(task=scenario["task"])
                 end_time = asyncio.get_event_loop().time()
                 duration = end_time - start_time
-                
+
                 print(f"  {method.value}: {duration:.1f}s (SUCCESS)")
-                
+
             except Exception as e:
                 end_time = asyncio.get_event_loop().time()
                 duration = end_time - start_time
                 print(f"  {method.value}: {duration:.1f}s (FAILED - {str(e)[:50]}...)")
 
 
-def main():
+def main() -> None:
     """Run scalability examples."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Run scalability examples")
     parser.add_argument(
         "--test",
@@ -273,18 +275,19 @@ def main():
         default="basic",
         help="Which scalability test to run"
     )
-    
+
     args = parser.parse_args()
-    
+
     if args.test == "basic" or args.test == "all":
         asyncio.run(test_voting_scalability([3, 5, 7]))
-    
+
     if args.test == "methods" or args.test == "all":
         asyncio.run(compare_voting_methods_by_scale())
-    
+
     if args.test == "consensus" or args.test == "all":
         asyncio.run(test_consensus_difficulty())
 
 
 if __name__ == "__main__":
     main()
+
