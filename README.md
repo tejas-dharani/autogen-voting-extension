@@ -328,10 +328,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- **GitHub Repository**: [autogen-voting-extension](https://github.com/your-username/autogen-voting-extension)
+- **GitHub Repository**: [autogen-voting-extension](https://github.com/tejas-dharani/autogen-voting-extension)
 - **PyPI Package**: [autogen-voting-extension](https://pypi.org/project/autogen-voting-extension/)
 - **AutoGen Documentation**: [Microsoft AutoGen](https://microsoft.github.io/autogen/)
-- **Issues & Support**: [GitHub Issues](https://github.com/your-username/autogen-voting-extension/issues)
+- **Issues & Support**: [GitHub Issues](https://github.com/tejas-dharani/autogen-voting-extension/issues)
 
 ---
 
