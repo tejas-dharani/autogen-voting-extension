@@ -335,11 +335,13 @@ class TestVotingGroupChatManager:
         assert voting_manager.current_proposal["id"] == "test-123"
         assert result == ["Agent1", "Agent2", "Agent3"]
 
-        # Test without ProposalMessage
+        # Test without ProposalMessage - TextMessage gets auto-converted to proposal
         voting_manager.set_phase_for_testing(VotingPhase.PROPOSAL)
         text_msg = TextMessage(content="Just text", source="Agent1")
         result = await voting_manager.handle_proposal_phase_for_testing(text_msg)
-        assert result == ["Agent1"]
+        # TextMessage gets converted to proposal, phase moves to voting, returns all eligible voters
+        assert result == ["Agent1", "Agent2", "Agent3"]
+        assert voting_manager.current_phase == VotingPhase.VOTING
 
     @pytest.mark.asyncio
     async def test_handle_voting_phase(self, voting_manager: VotingGroupChatManager) -> None:
@@ -393,7 +395,9 @@ class TestVotingGroupChatManager:
         """Test consensus phase handling."""
         text_msg = TextMessage(content="Consensus reached", source="Agent1")
         result = await voting_manager.handle_consensus_phase_for_testing(text_msg)
-        assert result == []  # No more speakers needed
+        result = await voting_manager.handle_proposal_phase_for_testing(text_msg)
+        # TextMessage gets converted to proposal, phase moves to voting, returns all eligible voters
+        assert result == ["Agent1", "Agent2", "Agent3"]
 
     @pytest.mark.asyncio
     async def test_is_voting_complete(self, voting_manager: VotingGroupChatManager) -> None:

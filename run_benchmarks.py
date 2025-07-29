@@ -43,7 +43,7 @@ async def run_quick_test() -> bool:
 
         print("Running quick comparison...")
         result = await runner.run_comparison(
-            scenario=test_scenario, voting_method=VotingMethod.MAJORITY, save_results=False
+            scenario=test_scenario, voting_method=VotingMethod.MAJORITY, save_results=True
         )
 
         print("✅ Quick test completed successfully!")

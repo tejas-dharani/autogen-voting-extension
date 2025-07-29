@@ -161,6 +161,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
         max_discussion_rounds: int,
         auto_propose_speaker: str | None,
         emit_team_events: bool,
+        metrics_collector: Any = None,  # Add metrics collector parameter
     ) -> None:
         super().__init__(
             name,
@@ -190,6 +191,10 @@ class VotingGroupChatManager(BaseGroupChatManager):
         self._votes_cast: dict[str, dict[str, Any]] = {}
         self._eligible_voters = list(participant_names)
         self._discussion_rounds = 0
+
+        # Metrics collection
+        self._metrics_collector: Any = metrics_collector
+        print(f"🔧 DEBUG: MANAGER_INIT - Metrics collector: {type(metrics_collector) if metrics_collector else 'None'}")
 
         # Register custom message types (check if already registered)
         try:
@@ -356,22 +361,46 @@ class VotingGroupChatManager(BaseGroupChatManager):
 
     async def select_speaker(self, thread: Sequence[BaseAgentEvent | BaseChatMessage]) -> list[str] | str:
         """Select speakers based on current voting phase and state."""
+        print(f"🔧 DEBUG: SELECT_SPEAKER - Phase: {self._current_phase.value}, Thread: {len(thread)} messages")
 
         if not thread:
             # Initial state - select proposer
-            return self._select_proposer()
+            proposer = self._select_proposer()
+            print(f"🔧 DEBUG: SELECT_SPEAKER - No thread, selected proposer: {proposer}")
+            return proposer
 
         last_message = thread[-1]
+        message_source = getattr(last_message, "source", "unknown")
+        print(f"🔧 DEBUG: SELECT_SPEAKER - Last message: {type(last_message).__name__} from {message_source}")
+
+        # Track message for metrics (if not from user)
+        if self._metrics_collector and message_source != "user":
+            print(f"🔧 DEBUG: SELECT_SPEAKER - Recording message from {message_source}")
+            # Estimate tokens (rough approximation: 1 token ≈ 4 characters)
+            message_content = getattr(last_message, "content", "")
+            estimated_tokens = len(str(message_content)) // 4
+            self._metrics_collector.record_message(message_source, estimated_tokens)
+            # Record API call (each agent message likely represents an API call)
+            self._metrics_collector.record_api_call(estimated_tokens)
+            print(f"🔧 DEBUG: SELECT_SPEAKER - Estimated {estimated_tokens} tokens, recorded API call")
 
         # Handle different voting phases
         if self._current_phase == VotingPhase.PROPOSAL:
-            return await self._handle_proposal_phase(last_message)
+            result = await self._handle_proposal_phase(last_message)
+            print(f"🔧 DEBUG: SELECT_SPEAKER - Proposal phase result: {result}")
+            return result
         elif self._current_phase == VotingPhase.VOTING:
-            return await self._handle_voting_phase(last_message)
+            result = await self._handle_voting_phase(last_message)
+            print(f"🔧 DEBUG: SELECT_SPEAKER - Voting phase result: {result}")
+            return result
         elif self._current_phase == VotingPhase.DISCUSSION:
-            return await self._handle_discussion_phase(last_message)
+            result = await self._handle_discussion_phase(last_message)
+            print(f"🔧 DEBUG: SELECT_SPEAKER - Discussion phase result: {result}")
+            return result
         else:  # VotingPhase.CONSENSUS
-            return await self._handle_consensus_phase(last_message)
+            result = await self._handle_consensus_phase(last_message)
+            print(f"🔧 DEBUG: SELECT_SPEAKER - Consensus phase result: {result}")
+            return result
 
     def _select_proposer(self) -> str:
         """Select who should make the initial proposal."""
@@ -381,8 +410,12 @@ class VotingGroupChatManager(BaseGroupChatManager):
 
     async def _handle_proposal_phase(self, last_message: BaseAgentEvent | BaseChatMessage) -> list[str]:
         """Handle speaker selection during proposal phase."""
+        print(
+            f"🔧 DEBUG: PROPOSAL_PHASE - Message type: {type(last_message).__name__}, source: {getattr(last_message, 'source', 'unknown')}"
+        )
 
         if isinstance(last_message, ProposalMessage):
+            print("🔧 DEBUG: PROPOSAL_PHASE - Received ProposalMessage, transitioning to voting")
             # Proposal received, transition to voting
             self._current_proposal = {
                 "id": last_message.content.proposal_id,
@@ -391,22 +424,50 @@ class VotingGroupChatManager(BaseGroupChatManager):
                 "options": last_message.content.options,
             }
             self._current_phase = VotingPhase.VOTING
+            print(f"🔧 DEBUG: PROPOSAL_PHASE - Set proposal: {self._current_proposal['title']}")
 
             # Announce voting phase
             await self._announce_voting_phase()
 
             # Return all eligible voters
+            print(f"🔧 DEBUG: PROPOSAL_PHASE - Returning eligible voters: {self._eligible_voters}")
+            return self._eligible_voters
+
+        # Accept TextMessage as proposal and auto-convert
+        elif isinstance(last_message, TextMessage) and last_message.source != "user":
+            print("🔧 DEBUG: PROPOSAL_PHASE - Converting TextMessage to proposal")
+            # Auto-convert TextMessage to proposal
+            self._current_proposal = {
+                "id": f"proposal_{len(self._message_thread)}",
+                "title": "Decision Required",
+                "description": last_message.content,
+                "options": ["APPROVE", "REJECT"],
+            }
+            self._current_phase = VotingPhase.VOTING
+            print(f"🔧 DEBUG: PROPOSAL_PHASE - Created proposal ID: {self._current_proposal['id']}")
+
+            # Announce voting phase
+            await self._announce_voting_phase()
+
+            # Return all eligible voters
+            print(f"🔧 DEBUG: PROPOSAL_PHASE - Returning eligible voters: {self._eligible_voters}")
             return self._eligible_voters
 
         # Still waiting for proposal
-        return [self._select_proposer()]
+        proposer = self._select_proposer()
+        print(f"🔧 DEBUG: PROPOSAL_PHASE - Still waiting, selecting proposer: {proposer}")
+        return [proposer]
 
     async def _handle_voting_phase(self, last_message: BaseAgentEvent | BaseChatMessage) -> list[str]:
         """Handle speaker selection during voting phase."""
+        print(
+            f"🔧 DEBUG: VOTING_PHASE - Message type: {type(last_message).__name__}, source: {getattr(last_message, 'source', 'unknown')}"
+        )
 
         if isinstance(last_message, VoteMessage):
             # Record the vote
             voter_name = last_message.source
+            print(f"🔧 DEBUG: VOTING_PHASE - Received VoteMessage from {voter_name}")
             if voter_name in self._eligible_voters:
                 self._votes_cast[voter_name] = {
                     "vote": last_message.content.vote,
@@ -416,13 +477,81 @@ class VotingGroupChatManager(BaseGroupChatManager):
                 }
 
                 trace_logger.debug(f"Vote recorded from {voter_name}: {last_message.content.vote}")
+                print(f"🔧 DEBUG: VOTING_PHASE - Recorded vote: {voter_name} -> {last_message.content.vote}")
+
+                # Track vote for metrics
+                if self._metrics_collector:
+                    vote_value = (
+                        last_message.content.vote.value
+                        if hasattr(last_message.content.vote, "value")
+                        else str(last_message.content.vote)
+                    )
+                    print(f"🔧 DEBUG: VOTING_PHASE - Recording VoteMessage in metrics: {voter_name} -> {vote_value}")
+                    self._metrics_collector.record_vote(voter_name, vote_value)
+
+                    # Track abstentions and reasoning
+                    if last_message.content.vote == VoteType.ABSTAIN:
+                        self._metrics_collector.current_metrics.abstentions += 1
+                    reasoning = last_message.content.reasoning
+                    if reasoning and len(reasoning.strip()) > 10:  # Has meaningful reasoning
+                        self._metrics_collector.current_metrics.reasoning_provided = True
+
+        # Accept TextMessage as vote and auto-convert
+        elif isinstance(last_message, TextMessage) and last_message.source in self._eligible_voters:
+            voter_name = last_message.source
+            print(f"🔧 DEBUG: VOTING_PHASE - Processing TextMessage from voter {voter_name}")
+
+            # Parse vote from text content
+            content = last_message.content.lower()
+            vote_type = None
+            reasoning = last_message.content
+
+            if any(word in content for word in ["approve", "accept", "yes", "support", "agree"]):
+                vote_type = VoteType.APPROVE
+            elif any(word in content for word in ["reject", "deny", "no", "oppose", "disagree"]):
+                vote_type = VoteType.REJECT
+            elif any(word in content for word in ["abstain", "neutral", "pass"]):
+                vote_type = VoteType.ABSTAIN
+
+            print(f"🔧 DEBUG: VOTING_PHASE - Parsed vote type: {vote_type}")
+            if vote_type and voter_name not in self._votes_cast:
+                self._votes_cast[voter_name] = {
+                    "vote": vote_type,
+                    "reasoning": reasoning,
+                    "confidence": 1.0,
+                    "ranked_choices": None,
+                }
+                print(f"🔧 DEBUG: VOTING_PHASE - Recorded parsed vote: {voter_name} -> {vote_type.value}")
+
+                # Track vote for metrics
+                if self._metrics_collector:
+                    print(f"🔧 DEBUG: VOTING_PHASE - Recording vote in metrics: {voter_name} -> {vote_type.value}")
+                    self._metrics_collector.record_vote(voter_name, vote_type.value)
+
+                    # Track abstentions and reasoning
+                    if vote_type == VoteType.ABSTAIN:
+                        self._metrics_collector.current_metrics.abstentions += 1
+                    if reasoning and len(reasoning.strip()) > 10:  # Has meaningful reasoning
+                        self._metrics_collector.current_metrics.reasoning_provided = True
+
+            elif voter_name in self._votes_cast:
+                print(f"🔧 DEBUG: VOTING_PHASE - {voter_name} already voted")
+            else:
+                print(f"🔧 DEBUG: VOTING_PHASE - Could not parse vote from {voter_name}")
 
         # Check if voting is complete
+        votes_cast_count = len(self._votes_cast)
+        eligible_count = len(self._eligible_voters)
+        print(f"🔧 DEBUG: VOTING_PHASE - Vote progress: {votes_cast_count}/{eligible_count}")
+        print(f"🔧 DEBUG: VOTING_PHASE - Votes cast: {list(self._votes_cast.keys())}")
+
         if self._is_voting_complete():
+            print("🔧 DEBUG: VOTING_PHASE - Voting complete, processing results")
             return await self._process_voting_results()
 
         # Return voters who haven't voted yet
         remaining_voters = [name for name in self._eligible_voters if name not in self._votes_cast]
+        print(f"🔧 DEBUG: VOTING_PHASE - Remaining voters: {remaining_voters}")
         return remaining_voters if remaining_voters else []
 
     async def _handle_discussion_phase(self, last_message: BaseAgentEvent | BaseChatMessage) -> list[str]:
@@ -452,25 +581,39 @@ class VotingGroupChatManager(BaseGroupChatManager):
 
     async def _process_voting_results(self) -> list[str]:
         """Process voting results and determine outcome."""
+        print(f"🔧 DEBUG: PROCESS_RESULTS - Processing {len(self._votes_cast)} votes")
 
         if not self._votes_cast:
+            print("🔧 DEBUG: PROCESS_RESULTS - No votes cast, returning empty")
             return []
 
         # Calculate results based on voting method
         result = self._calculate_voting_result()
+        print(f"🔧 DEBUG: PROCESS_RESULTS - Calculated result: {result['result']}")
+        print(f"🔧 DEBUG: PROCESS_RESULTS - Vote summary: {result['votes_summary']}")
 
         # Create and send result message
         result_message = VotingResultMessage(content=VotingResult(**result), source=self._name)
+        print("🔧 DEBUG: PROCESS_RESULTS - Created result message")
 
         await self.update_message_thread([result_message])
+        print("🔧 DEBUG: PROCESS_RESULTS - Updated message thread")
 
         # Determine next phase
         if result["result"] == "no_consensus" and self._discussion_rounds < self._max_discussion_rounds:
             self._current_phase = VotingPhase.DISCUSSION
             self._discussion_rounds += 1
+            print(f"🔧 DEBUG: PROCESS_RESULTS - Moving to discussion phase, round {self._discussion_rounds}")
+
+            # Track discussion rounds in metrics
+            if self._metrics_collector:
+                self._metrics_collector.current_metrics.discussion_rounds = self._discussion_rounds
+                print(f"🔧 DEBUG: PROCESS_RESULTS - Updated metrics discussion rounds: {self._discussion_rounds}")
+
             return self._participant_names  # Open discussion
         else:
             self._current_phase = VotingPhase.CONSENSUS
+            print("🔧 DEBUG: PROCESS_RESULTS - Moving to consensus phase, voting complete")
             return []  # End voting process
 
     def _calculate_voting_result(self) -> dict[str, Any]:
@@ -811,6 +954,14 @@ class VotingGroupChat(BaseGroupChat, Component[VotingGroupChatConfig]):
         self._max_discussion_rounds = max_discussion_rounds
         self._auto_propose_speaker = auto_propose_speaker
 
+        # Initialize metrics collector (will be set by benchmark runner)
+        self._metrics_collector = None
+
+    def set_metrics_collector(self, metrics_collector: Any) -> None:
+        """Set the metrics collector for tracking performance data."""
+        self._metrics_collector = metrics_collector
+        print(f"🔧 DEBUG: VOTING_CHAT - Set metrics collector: {type(metrics_collector)}")
+
     def _create_group_chat_manager_factory(
         self,
         name: str,
@@ -843,6 +994,7 @@ class VotingGroupChat(BaseGroupChat, Component[VotingGroupChatConfig]):
                 max_discussion_rounds=self._max_discussion_rounds,
                 auto_propose_speaker=self._auto_propose_speaker,
                 emit_team_events=self._emit_team_events,
+                metrics_collector=getattr(self, "_metrics_collector", None),  # Pass metrics collector
             )
 
         return _factory

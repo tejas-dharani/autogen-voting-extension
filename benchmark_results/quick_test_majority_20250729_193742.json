@@ -1,0 +1,70 @@
+{
+  "scenario_name": "quick_test",
+  "scenario_description": "Quick test scenario",
+  "voting_metrics": {
+    "timestamp": "2025-07-29T19:37:42.319213",
+    "duration_seconds": 15.181112289428711,
+    "decision_reached": true,
+    "consensus_type": "majority",
+    "final_vote_counts": {
+      "approve": 3
+    },
+    "total_messages": 4,
+    "discussion_rounds": 0,
+    "token_usage": 1088,
+    "api_calls": 4,
+    "agent_participation": {
+      "Reviewer1": 2,
+      "Reviewer2": 1,
+      "Reviewer3": 1
+    },
+    "voting_patterns": {
+      "Reviewer1": [
+        "approve"
+      ],
+      "Reviewer2": [
+        "approve"
+      ],
+      "Reviewer3": [
+        "approve"
+      ]
+    },
+    "abstentions": 0,
+    "reasoning_provided": true,
+    "tie_breaks": 0,
+    "custom_metrics": {}
+  },
+  "standard_metrics": {
+    "timestamp": "2025-07-29T19:37:42.319228",
+    "duration_seconds": 49.42791795730591,
+    "decision_reached": true,
+    "consensus_type": "sequential",
+    "final_vote_counts": {},
+    "total_messages": 19,
+    "discussion_rounds": 0,
+    "token_usage": 2030,
+    "api_calls": 19,
+    "agent_participation": {
+      "Reviewer1": 7,
+      "Reviewer2": 6,
+      "Reviewer3": 6
+    },
+    "voting_patterns": {},
+    "abstentions": 0,
+    "reasoning_provided": false,
+    "tie_breaks": 0,
+    "custom_metrics": {}
+  },
+  "efficiency_comparison": {
+    "time_ratio": 0.30713639005676147,
+    "message_ratio": 0.21052631578947367,
+    "token_ratio": 0.5359605911330049,
+    "api_call_ratio": 0.21052631578947367
+  },
+  "participation_comparison": {
+    "voting_active_agents": 3,
+    "standard_active_agents": 3,
+    "voting_avg_messages_per_agent": 1.3333333333333333,
+    "standard_avg_messages_per_agent": 6.333333333333333
+  }
+}
