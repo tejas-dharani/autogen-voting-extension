@@ -107,6 +107,7 @@ source = { editable = "." }
 dependencies = [
     { name = "autogen-agentchat" },
     { name = "autogen-core" },
+    { name = "autogen-ext", extra = ["openai"] },
     { name = "pydantic" },
     { name = "typing-extensions" },
 ]
@@ -156,6 +157,7 @@ benchmarks = [
 requires-dist = [
     { name = "autogen-agentchat", specifier = ">=0.4.0" },
     { name = "autogen-core", specifier = ">=0.4.0" },
+    { name = "autogen-ext", extras = ["openai"], specifier = ">=0.4.0" },
     { name = "autogen-ext", extras = ["openai"], marker = "extra == 'openai'", specifier = ">=0.4.0" },
     { name = "bandit", extras = ["toml"], marker = "extra == 'dev'", specifier = ">=1.7.0" },
     { name = "build", marker = "extra == 'dev'", specifier = ">=0.10.0" },
