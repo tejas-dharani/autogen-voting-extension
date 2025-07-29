@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Script to run comprehensive benchmarks comparing voting vs standard group chat approaches."""
 
-import argparse
 import asyncio
 import os
 import sys
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from pathlib import Path
 
 # Add src to path
@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from autogen_voting import VotingMethod
 from benchmarks.metrics import ComparisonResults
 from benchmarks.runner import BenchmarkRunner
-from benchmarks.scenarios import ScenarioType
+from benchmarks.scenarios import BenchmarkScenario, ScenarioType, get_scenario_by_name
 
 
 async def run_quick_test() -> bool:
@@ -29,8 +29,6 @@ async def run_quick_test() -> bool:
         runner = BenchmarkRunner(model_name="gpt-4o-mini")
 
         # Create a simple test scenario
-        from benchmarks.scenarios import BenchmarkScenario
-
         test_scenario = BenchmarkScenario(
             name="quick_test",
             scenario_type=ScenarioType.CODE_REVIEW,
@@ -121,8 +119,6 @@ async def run_scalability_test() -> None:
     print("Note: For detailed scalability testing, run: python examples/scalability_example.py")
 
     # Run a basic scalability comparison
-    from benchmarks.scenarios import get_scenario_by_name
-
     runner = BenchmarkRunner(model_name="gpt-4o-mini")
 
     scenario = get_scenario_by_name("bug_detection_security")
@@ -136,9 +132,9 @@ async def run_scalability_test() -> None:
 
 def main() -> None:
     """Main entry point for benchmark runner."""
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         description="Run AutoGen Voting Extension benchmarks",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   python run_benchmarks.py --quick                    # Quick test
