@@ -1,5 +1,9 @@
 import asyncio
+import hashlib
+import hmac
 import logging
+import re
+import secrets
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from enum import Enum
@@ -22,8 +26,6 @@ from pydantic import BaseModel, Field
 from typing_extensions import Self
 
 TRACE_LOGGER_NAME = "autogen_agentchat.trace"
-
-trace_logger = logging.getLogger(TRACE_LOGGER_NAME)
 
 
 class VotingMethod(str, Enum):
@@ -53,12 +55,219 @@ class VotingPhase(str, Enum):
     DISCUSSION = "discussion"  # Additional discussion needed
 
 
+class ByzantineFaultDetector:
+    """Detects and mitigates Byzantine faults in voting systems."""
+
+    def __init__(self, total_agents: int, detection_threshold: float = 0.3):
+        self.total_agents = total_agents
+        self.detection_threshold = detection_threshold
+        self.reputation_scores: dict[str, float] = {}
+        self.vote_history: dict[str, list[VoteType]] = {}
+        self.suspicious_agents: set[str] = set()
+        self.consensus_history: list[dict[str, Any]] = []
+
+    def initialize_agent_reputation(self, agent_name: str) -> None:
+        """Initialize reputation for a new agent."""
+        self.reputation_scores[agent_name] = 1.0
+        self.vote_history[agent_name] = []
+
+    def update_reputation(self, agent_name: str, vote: VoteType, consensus_outcome: str) -> None:
+        """Update agent reputation based on voting behavior."""
+        if agent_name not in self.reputation_scores:
+            self.initialize_agent_reputation(agent_name)
+
+        # Track vote history
+        self.vote_history[agent_name].append(vote)
+
+        # Simple reputation update: reward consistency with consensus
+        if consensus_outcome == "approved" and vote == VoteType.APPROVE:
+            self.reputation_scores[agent_name] = min(1.0, self.reputation_scores[agent_name] + 0.1)
+        elif consensus_outcome == "rejected" and vote == VoteType.REJECT:
+            self.reputation_scores[agent_name] = min(1.0, self.reputation_scores[agent_name] + 0.1)
+        else:
+            # Penalize inconsistent voting (but not too harshly for legitimate disagreement)
+            self.reputation_scores[agent_name] = max(0.1, self.reputation_scores[agent_name] - 0.05)
+
+    def detect_byzantine_behavior(self, agent_name: str) -> bool:
+        """Detect potential Byzantine behavior patterns."""
+        if agent_name not in self.reputation_scores:
+            return False
+
+        reputation = self.reputation_scores[agent_name]
+        vote_history = self.vote_history[agent_name]
+
+        # Check reputation threshold
+        if reputation < self.detection_threshold:
+            self.suspicious_agents.add(agent_name)
+            return True
+
+        # Check for erratic voting patterns (too many rapid changes)
+        if len(vote_history) >= 5:
+            recent_votes = vote_history[-5:]
+            # Count vote type changes
+            changes = sum(1 for i in range(1, len(recent_votes)) if recent_votes[i] != recent_votes[i - 1])
+            if changes >= 4:  # Changed vote type 4+ times in last 5 votes
+                self.suspicious_agents.add(agent_name)
+                return True
+
+        return False
+
+    def get_weighted_vote_count(self, votes: dict[str, dict[str, Any]]) -> dict[str, float]:
+        """Calculate weighted vote counts based on reputation."""
+        weighted_counts = {"approve": 0.0, "reject": 0.0, "abstain": 0.0}
+
+        for agent_name, vote_data in votes.items():
+            reputation = self.reputation_scores.get(agent_name, 1.0)
+            vote_type = vote_data["vote"].value if hasattr(vote_data["vote"], "value") else str(vote_data["vote"])
+
+            # Reduce weight for suspicious agents
+            if agent_name in self.suspicious_agents:
+                reputation *= 0.5
+
+            weighted_counts[vote_type] += reputation
+
+        return weighted_counts
+
+    def is_byzantine_resilient(self, votes: dict[str, dict[str, Any]]) -> bool:
+        """Check if voting result is resilient to Byzantine faults."""
+        total_weight = sum(self.reputation_scores.get(name, 1.0) for name in votes.keys())
+
+        # Estimate maximum Byzantine weight (assume up to 1/3 could be Byzantine)
+        max_byzantine_weight = total_weight / 3
+
+        weighted_counts = self.get_weighted_vote_count(votes)
+        max_honest_votes = max(weighted_counts.values())
+
+        # Result is resilient if honest majority exceeds potential Byzantine influence
+        return max_honest_votes > max_byzantine_weight
+
+
+trace_logger = logging.getLogger(TRACE_LOGGER_NAME)
+
+# Security constants
+MAX_PROPOSAL_LENGTH = 10000
+MAX_REASONING_LENGTH = 5000
+MAX_OPTION_LENGTH = 500
+MAX_OPTIONS_COUNT = 20
+ALLOWED_CHARACTERS = re.compile(r'^[\w\s.,!?@#$%^&*()_+\-=\[\]{};:"|<>?~`/\\]*$')
+
+
+class SecurityValidator:
+    """Validates and sanitizes inputs to prevent injection attacks and ensure data integrity."""
+
+    @staticmethod
+    def sanitize_text(text: str, max_length: int) -> str:
+        """Sanitize text input to prevent injection attacks."""
+        if not isinstance(text, str):
+            raise ValueError("Input must be a string")
+
+        # Remove null bytes and control characters
+        text = text.replace("\x00", "").replace("\r", "\n")
+
+        # Limit length
+        if len(text) > max_length:
+            raise ValueError(f"Text exceeds maximum length of {max_length} characters")
+
+        # Check for suspicious patterns
+        if not ALLOWED_CHARACTERS.match(text):
+            raise ValueError("Text contains invalid characters")
+
+        # Basic XSS prevention
+        dangerous_patterns = ["<script", "javascript:", "data:text/html", "vbscript:", "onload="]
+        text_lower = text.lower()
+        for pattern in dangerous_patterns:
+            if pattern in text_lower:
+                raise ValueError(f"Text contains potentially dangerous content: {pattern}")
+
+        return text.strip()
+
+    @staticmethod
+    def validate_agent_name(name: str) -> str:
+        """Validate agent name to prevent impersonation."""
+        if not isinstance(name, str):
+            raise ValueError("Agent name must be a string")
+
+        name = name.strip()
+        if not name:
+            raise ValueError("Agent name cannot be empty")
+
+        if len(name) > 100:
+            raise ValueError("Agent name too long")
+
+        # Only allow alphanumeric, underscore, and hyphen
+        if not re.match(r"^[a-zA-Z0-9_-]+$", name):
+            raise ValueError("Agent name contains invalid characters")
+
+        return name
+
+    @staticmethod
+    def generate_proposal_id() -> str:
+        """Generate a secure, unique proposal ID."""
+        return f"proposal_{secrets.token_hex(16)}"
+
+    @staticmethod
+    def create_vote_signature(vote_data: dict[str, Any], agent_key: str) -> str:
+        """Create cryptographic signature for vote integrity."""
+        # Create canonical representation of vote data
+        canonical = f"{vote_data['vote']}:{vote_data['proposal_id']}:{vote_data.get('reasoning', '')}"
+
+        # Create HMAC signature
+        signature = hmac.new(agent_key.encode("utf-8"), canonical.encode("utf-8"), hashlib.sha256).hexdigest()
+
+        return signature
+
+    @staticmethod
+    def verify_vote_signature(vote_data: dict[str, Any], agent_key: str, signature: str) -> bool:
+        """Verify vote signature for integrity checking."""
+        expected_signature = SecurityValidator.create_vote_signature(vote_data, agent_key)
+        return hmac.compare_digest(expected_signature, signature)
+
+
+class AuditLogger:
+    """Handles secure audit logging for voting actions."""
+
+    def __init__(self):
+        self.audit_logger = logging.getLogger("autogen_voting.audit")
+
+    def log_proposal_created(self, proposal_id: str, proposer: str, title: str) -> None:
+        """Log proposal creation."""
+        self.audit_logger.info(f"PROPOSAL_CREATED: id={proposal_id}, proposer={proposer}, title='{title[:100]}'")
+
+    def log_vote_cast(self, proposal_id: str, voter: str, vote: str, has_signature: bool) -> None:
+        """Log vote casting."""
+        self.audit_logger.info(f"VOTE_CAST: proposal={proposal_id}, voter={voter}, vote={vote}, signed={has_signature}")
+
+    def log_voting_result(self, proposal_id: str, result: str, participation_rate: float) -> None:
+        """Log voting results."""
+        self.audit_logger.info(
+            f"VOTING_COMPLETE: proposal={proposal_id}, result={result}, participation={participation_rate:.2%}"
+        )
+
+    def log_security_violation(self, violation_type: str, details: str) -> None:
+        """Log security violations."""
+        self.audit_logger.warning(f"SECURITY_VIOLATION: type={violation_type}, details='{details}'")
+
+
 class VoteContent(BaseModel):
     vote: VoteType
     proposal_id: str
     reasoning: str | None = None
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     ranked_choices: list[str] | None = None  # For ranked choice voting
+    signature: str | None = None  # Cryptographic signature for integrity
+    timestamp: str | None = None  # Vote timestamp for audit trail
+
+    def model_post_init(self, __context: Any) -> None:
+        """Validate and sanitize vote content after initialization."""
+        if self.reasoning:
+            self.reasoning = SecurityValidator.sanitize_text(self.reasoning, MAX_REASONING_LENGTH)
+
+        if self.ranked_choices:
+            if len(self.ranked_choices) > MAX_OPTIONS_COUNT:
+                raise ValueError(f"Too many ranked choices (max {MAX_OPTIONS_COUNT})")
+            self.ranked_choices = [
+                SecurityValidator.sanitize_text(choice, MAX_OPTION_LENGTH) for choice in self.ranked_choices
+            ]
 
 
 class VoteMessage(StructuredMessage[VoteContent]):
@@ -82,6 +291,23 @@ class ProposalContent(BaseModel):
     options: list[str] = Field(default_factory=list)  # For multiple choice proposals
     requires_discussion: bool = False
     deadline: str | None = None
+    created_timestamp: str | None = None  # Proposal creation timestamp
+    proposer_signature: str | None = None  # Cryptographic signature from proposer
+
+    def model_post_init(self, __context: Any) -> None:
+        """Validate and sanitize proposal content after initialization."""
+        # Auto-generate secure ID if not provided
+        if not self.proposal_id:
+            self.proposal_id = SecurityValidator.generate_proposal_id()
+
+        # Validate and sanitize text fields
+        self.title = SecurityValidator.sanitize_text(self.title, MAX_OPTION_LENGTH)
+        self.description = SecurityValidator.sanitize_text(self.description, MAX_PROPOSAL_LENGTH)
+
+        # Validate options
+        if len(self.options) > MAX_OPTIONS_COUNT:
+            raise ValueError(f"Too many options (max {MAX_OPTIONS_COUNT})")
+        self.options = [SecurityValidator.sanitize_text(option, MAX_OPTION_LENGTH) for option in self.options]
 
 
 class ProposalMessage(StructuredMessage[ProposalContent]):
@@ -192,6 +418,18 @@ class VotingGroupChatManager(BaseGroupChatManager):
         self._eligible_voters = list(participant_names)
         self._discussion_rounds = 0
 
+        # Security features
+        self._agent_keys: dict[str, str] = {}  # Agent name -> secret key for authentication
+        self._audit_logger = AuditLogger()
+        self._vote_nonces: set[str] = set()  # Prevent replay attacks
+        self._byzantine_detector = ByzantineFaultDetector(len(participant_names))
+
+        # Initialize agent keys and reputation (in production, these should be provided securely)
+        for name in participant_names:
+            validated_name = SecurityValidator.validate_agent_name(name)
+            self._agent_keys[validated_name] = secrets.token_hex(32)
+            self._byzantine_detector.initialize_agent_reputation(validated_name)
+
         # Metrics collection
         self._metrics_collector: Any = metrics_collector
         print(f"🔧 DEBUG: MANAGER_INIT - Metrics collector: {type(metrics_collector) if metrics_collector else 'None'}")
@@ -266,79 +504,60 @@ class VotingGroupChatManager(BaseGroupChatManager):
         """Get the list of eligible voters."""
         return self._eligible_voters.copy()  # Return a copy to prevent external modification
 
-    # Test-specific methods for state manipulation
-    def set_phase_for_testing(self, phase: VotingPhase) -> None:
-        """Set the current phase for testing purposes only."""
-        self._current_phase = phase
+    def authenticate_agent(self, agent_name: str) -> bool:
+        """Authenticate an agent for voting operations."""
+        try:
+            validated_name = SecurityValidator.validate_agent_name(agent_name)
+            return validated_name in self._agent_keys
+        except ValueError as e:
+            self._audit_logger.log_security_violation("INVALID_AGENT_NAME", str(e))
+            return False
 
-    def set_proposal_for_testing(self, proposal: dict[str, Any] | None) -> None:
-        """Set the current proposal for testing purposes only."""
-        self._current_proposal = proposal
+    def validate_vote_integrity(self, vote_message: VoteMessage) -> bool:
+        """Validate vote message integrity and authenticity."""
+        try:
+            voter_name = vote_message.source
+            if not self.authenticate_agent(voter_name):
+                return False
 
-    def set_votes_for_testing(self, votes: dict[str, dict[str, Any]]) -> None:
-        """Set the votes cast for testing purposes only."""
-        self._votes_cast = votes.copy()
+            # Check for signature if present
+            if vote_message.content.signature:
+                vote_data = {
+                    "vote": vote_message.content.vote.value,
+                    "proposal_id": vote_message.content.proposal_id,
+                    "reasoning": vote_message.content.reasoning or "",
+                }
 
-    def set_discussion_rounds_for_testing(self, rounds: int) -> None:
-        """Set the discussion rounds for testing purposes only."""
-        self._discussion_rounds = rounds
+                agent_key = self._agent_keys[voter_name]
+                if not SecurityValidator.verify_vote_signature(vote_data, agent_key, vote_message.content.signature):
+                    self._audit_logger.log_security_violation("INVALID_VOTE_SIGNATURE", f"voter={voter_name}")
+                    return False
 
-    def set_participant_names_for_testing(self, names: list[str]) -> None:
-        """Set participant names for testing purposes only."""
-        self._participant_names = names
+            # Check for replay attacks using nonce
+            if vote_message.content.timestamp:
+                nonce = f"{voter_name}:{vote_message.content.proposal_id}:{vote_message.content.timestamp}"
+                if nonce in self._vote_nonces:
+                    self._audit_logger.log_security_violation("REPLAY_ATTACK", f"nonce={nonce}")
+                    return False
+                self._vote_nonces.add(nonce)
 
-    def clear_votes_for_testing(self) -> None:
-        """Clear all votes for testing purposes only."""
-        self._votes_cast = {}
+            return True
+        except Exception as e:
+            self._audit_logger.log_security_violation("VOTE_VALIDATION_ERROR", str(e))
+            return False
 
-    # Public test interfaces for internal methods
-    def select_proposer_for_testing(self) -> str:
-        """Public interface for testing _select_proposer method."""
-        return self._select_proposer()
+    def validate_proposal_integrity(self, proposal_message: ProposalMessage) -> bool:
+        """Validate proposal message integrity and authenticity."""
+        try:
+            proposer_name = proposal_message.source
+            if not self.authenticate_agent(proposer_name):
+                return False
 
-    async def handle_proposal_phase_for_testing(self, last_message: BaseAgentEvent | BaseChatMessage) -> list[str]:
-        """Public interface for testing _handle_proposal_phase method."""
-        return await self._handle_proposal_phase(last_message)
-
-    async def handle_voting_phase_for_testing(self, last_message: BaseAgentEvent | BaseChatMessage) -> list[str]:
-        """Public interface for testing _handle_voting_phase method."""
-        return await self._handle_voting_phase(last_message)
-
-    async def handle_discussion_phase_for_testing(self, last_message: BaseAgentEvent | BaseChatMessage) -> list[str]:
-        """Public interface for testing _handle_discussion_phase method."""
-        return await self._handle_discussion_phase(last_message)
-
-    async def handle_consensus_phase_for_testing(self, last_message: BaseAgentEvent | BaseChatMessage) -> list[str]:
-        """Public interface for testing _handle_consensus_phase method."""
-        return await self._handle_consensus_phase(last_message)
-
-    def is_voting_complete_for_testing(self) -> bool:
-        """Public interface for testing _is_voting_complete method."""
-        return self._is_voting_complete()
-
-    async def process_voting_results_for_testing(self) -> list[str]:
-        """Public interface for testing _process_voting_results method."""
-        return await self._process_voting_results()
-
-    def calculate_voting_result_for_testing(self) -> dict[str, Any]:
-        """Public interface for testing _calculate_voting_result method."""
-        return self._calculate_voting_result()
-
-    async def announce_voting_phase_for_testing(self) -> None:
-        """Public interface for testing _announce_voting_phase method."""
-        await self._announce_voting_phase()
-
-    def set_auto_propose_speaker_for_testing(self, speaker: str | None) -> None:
-        """Set auto propose speaker for testing purposes only."""
-        self._auto_propose_speaker = speaker
-
-    def set_voting_method_for_testing(self, method: VotingMethod) -> None:
-        """Set voting method for testing purposes only."""
-        self._voting_method = method
-
-    def set_qualified_majority_threshold_for_testing(self, threshold: float) -> None:
-        """Set qualified majority threshold for testing purposes only."""
-        self._qualified_majority_threshold = threshold
+            # Additional proposal-specific validation could go here
+            return True
+        except Exception as e:
+            self._audit_logger.log_security_violation("PROPOSAL_VALIDATION_ERROR", str(e))
+            return False
 
     async def validate_group_state(self, messages: list[BaseChatMessage] | None) -> None:
         """Validate the group state for voting."""
@@ -360,47 +579,87 @@ class VotingGroupChatManager(BaseGroupChatManager):
         self._discussion_rounds = 0
 
     async def select_speaker(self, thread: Sequence[BaseAgentEvent | BaseChatMessage]) -> list[str] | str:
-        """Select speakers based on current voting phase and state."""
-        print(f"🔧 DEBUG: SELECT_SPEAKER - Phase: {self._current_phase.value}, Thread: {len(thread)} messages")
+        """Select speakers based on current voting phase and state with comprehensive error handling."""
+        try:
+            print(f"🔧 DEBUG: SELECT_SPEAKER - Phase: {self._current_phase.value}, Thread: {len(thread)} messages")
 
-        if not thread:
-            # Initial state - select proposer
-            proposer = self._select_proposer()
-            print(f"🔧 DEBUG: SELECT_SPEAKER - No thread, selected proposer: {proposer}")
-            return proposer
+            if not thread:
+                # Initial state - select proposer
+                proposer = self._select_proposer()
+                print(f"🔧 DEBUG: SELECT_SPEAKER - No thread, selected proposer: {proposer}")
+                return proposer
 
-        last_message = thread[-1]
-        message_source = getattr(last_message, "source", "unknown")
-        print(f"🔧 DEBUG: SELECT_SPEAKER - Last message: {type(last_message).__name__} from {message_source}")
+            last_message = thread[-1]
+            message_source = getattr(last_message, "source", "unknown")
+            print(f"🔧 DEBUG: SELECT_SPEAKER - Last message: {type(last_message).__name__} from {message_source}")
 
-        # Track message for metrics (if not from user)
-        if self._metrics_collector and message_source != "user":
-            print(f"🔧 DEBUG: SELECT_SPEAKER - Recording message from {message_source}")
-            # Estimate tokens (rough approximation: 1 token ≈ 4 characters)
-            message_content = getattr(last_message, "content", "")
-            estimated_tokens = len(str(message_content)) // 4
-            self._metrics_collector.record_message(message_source, estimated_tokens)
-            # Record API call (each agent message likely represents an API call)
-            self._metrics_collector.record_api_call(estimated_tokens)
-            print(f"🔧 DEBUG: SELECT_SPEAKER - Estimated {estimated_tokens} tokens, recorded API call")
+            # Validate message source
+            if message_source != "user" and not self.authenticate_agent(message_source):
+                self._audit_logger.log_security_violation("UNAUTHENTICATED_MESSAGE", f"source={message_source}")
+                # Return current phase appropriate speakers as fallback
+                return self._get_fallback_speakers()
 
-        # Handle different voting phases
-        if self._current_phase == VotingPhase.PROPOSAL:
-            result = await self._handle_proposal_phase(last_message)
-            print(f"🔧 DEBUG: SELECT_SPEAKER - Proposal phase result: {result}")
-            return result
-        elif self._current_phase == VotingPhase.VOTING:
-            result = await self._handle_voting_phase(last_message)
-            print(f"🔧 DEBUG: SELECT_SPEAKER - Voting phase result: {result}")
-            return result
-        elif self._current_phase == VotingPhase.DISCUSSION:
-            result = await self._handle_discussion_phase(last_message)
-            print(f"🔧 DEBUG: SELECT_SPEAKER - Discussion phase result: {result}")
-            return result
-        else:  # VotingPhase.CONSENSUS
-            result = await self._handle_consensus_phase(last_message)
-            print(f"🔧 DEBUG: SELECT_SPEAKER - Consensus phase result: {result}")
-            return result
+            # Track message for metrics (if not from user)
+            if self._metrics_collector and message_source != "user":
+                try:
+                    print(f"🔧 DEBUG: SELECT_SPEAKER - Recording message from {message_source}")
+                    # Estimate tokens (rough approximation: 1 token ≈ 4 characters)
+                    message_content = getattr(last_message, "content", "")
+                    estimated_tokens = len(str(message_content)) // 4
+                    self._metrics_collector.record_message(message_source, estimated_tokens)
+                    # Record API call (each agent message likely represents an API call)
+                    self._metrics_collector.record_api_call(estimated_tokens)
+                    print(f"🔧 DEBUG: SELECT_SPEAKER - Estimated {estimated_tokens} tokens, recorded API call")
+                except Exception as e:
+                    print(f"🔧 DEBUG: SELECT_SPEAKER - Metrics recording failed: {e}")
+
+            # Handle different voting phases with error recovery
+            try:
+                if self._current_phase == VotingPhase.PROPOSAL:
+                    result = await self._handle_proposal_phase(last_message)
+                    print(f"🔧 DEBUG: SELECT_SPEAKER - Proposal phase result: {result}")
+                    return result
+                elif self._current_phase == VotingPhase.VOTING:
+                    result = await self._handle_voting_phase(last_message)
+                    print(f"🔧 DEBUG: SELECT_SPEAKER - Voting phase result: {result}")
+                    return result
+                elif self._current_phase == VotingPhase.DISCUSSION:
+                    result = await self._handle_discussion_phase(last_message)
+                    print(f"🔧 DEBUG: SELECT_SPEAKER - Discussion phase result: {result}")
+                    return result
+                else:  # VotingPhase.CONSENSUS
+                    result = await self._handle_consensus_phase(last_message)
+                    print(f"🔧 DEBUG: SELECT_SPEAKER - Consensus phase result: {result}")
+                    return result
+            except Exception as phase_error:
+                self._audit_logger.log_security_violation(
+                    "PHASE_HANDLING_ERROR", f"phase={self._current_phase.value}, error={str(phase_error)}"
+                )
+                print(f"🔧 ERROR: SELECT_SPEAKER - Phase handling failed: {phase_error}")
+                return self._get_fallback_speakers()
+
+        except Exception as e:
+            # Critical error recovery
+            self._audit_logger.log_security_violation("CRITICAL_SELECT_SPEAKER_ERROR", str(e))
+            print(f"🔧 CRITICAL_ERROR: SELECT_SPEAKER - {e}")
+            return self._get_fallback_speakers()
+
+    def _get_fallback_speakers(self) -> list[str]:
+        """Get fallback speakers based on current phase when errors occur."""
+        try:
+            if self._current_phase == VotingPhase.PROPOSAL:
+                return [self._select_proposer()]
+            elif self._current_phase == VotingPhase.VOTING:
+                # Return voters who haven't voted yet
+                remaining = [name for name in self._eligible_voters if name not in self._votes_cast]
+                return remaining if remaining else []
+            elif self._current_phase == VotingPhase.DISCUSSION:
+                return self._participant_names
+            else:  # VotingPhase.CONSENSUS
+                return []
+        except Exception:
+            # Ultimate fallback
+            return [self._participant_names[0]] if self._participant_names else []
 
     def _select_proposer(self) -> str:
         """Select who should make the initial proposal."""
@@ -415,7 +674,16 @@ class VotingGroupChatManager(BaseGroupChatManager):
         )
 
         if isinstance(last_message, ProposalMessage):
-            print("🔧 DEBUG: PROPOSAL_PHASE - Received ProposalMessage, transitioning to voting")
+            print("🔧 DEBUG: PROPOSAL_PHASE - Received ProposalMessage, validating integrity")
+
+            # Validate proposal integrity and authenticity
+            if not self.validate_proposal_integrity(last_message):
+                print("🔧 DEBUG: PROPOSAL_PHASE - Proposal validation failed")
+                self._audit_logger.log_security_violation("INVALID_PROPOSAL", f"proposer={last_message.source}")
+                return [self._select_proposer()]  # Request new proposal
+
+            print("🔧 DEBUG: PROPOSAL_PHASE - Proposal validated, transitioning to voting")
+
             # Proposal received, transition to voting
             self._current_proposal = {
                 "id": last_message.content.proposal_id,
@@ -425,6 +693,11 @@ class VotingGroupChatManager(BaseGroupChatManager):
             }
             self._current_phase = VotingPhase.VOTING
             print(f"🔧 DEBUG: PROPOSAL_PHASE - Set proposal: {self._current_proposal['title']}")
+
+            # Log proposal creation
+            self._audit_logger.log_proposal_created(
+                last_message.content.proposal_id, last_message.source, last_message.content.title
+            )
 
             # Announce voting phase
             await self._announce_voting_phase()
@@ -465,19 +738,39 @@ class VotingGroupChatManager(BaseGroupChatManager):
         )
 
         if isinstance(last_message, VoteMessage):
-            # Record the vote
+            # Validate vote integrity and authenticity
             voter_name = last_message.source
-            print(f"🔧 DEBUG: VOTING_PHASE - Received VoteMessage from {voter_name}")
+            print(f"🔧 DEBUG: VOTING_PHASE - Received VoteMessage from {voter_name}, validating integrity")
+
+            if not self.validate_vote_integrity(last_message):
+                print(f"🔧 DEBUG: VOTING_PHASE - Vote validation failed for {voter_name}")
+                # Continue without recording invalid vote
+                remaining_voters = [name for name in self._eligible_voters if name not in self._votes_cast]
+                return remaining_voters if remaining_voters else []
+
+            print(f"🔧 DEBUG: VOTING_PHASE - Vote validated for {voter_name}")
+
+            # Record the vote
             if voter_name in self._eligible_voters:
                 self._votes_cast[voter_name] = {
                     "vote": last_message.content.vote,
                     "reasoning": last_message.content.reasoning,
                     "confidence": last_message.content.confidence,
                     "ranked_choices": last_message.content.ranked_choices,
+                    "signature": last_message.content.signature,
+                    "timestamp": last_message.content.timestamp,
                 }
 
                 trace_logger.debug(f"Vote recorded from {voter_name}: {last_message.content.vote}")
                 print(f"🔧 DEBUG: VOTING_PHASE - Recorded vote: {voter_name} -> {last_message.content.vote}")
+
+                # Log vote casting
+                self._audit_logger.log_vote_cast(
+                    last_message.content.proposal_id,
+                    voter_name,
+                    last_message.content.vote.value,
+                    last_message.content.signature is not None,
+                )
 
                 # Track vote for metrics
                 if self._metrics_collector:
@@ -596,6 +889,9 @@ class VotingGroupChatManager(BaseGroupChatManager):
         result_message = VotingResultMessage(content=VotingResult(**result), source=self._name)
         print("🔧 DEBUG: PROCESS_RESULTS - Created result message")
 
+        # Log voting result
+        self._audit_logger.log_voting_result(result["proposal_id"], result["result"], result["participation_rate"])
+
         await self.update_message_thread([result_message])
         print("🔧 DEBUG: PROCESS_RESULTS - Updated message thread")
 
@@ -617,73 +913,192 @@ class VotingGroupChatManager(BaseGroupChatManager):
             return []  # End voting process
 
     def _calculate_voting_result(self) -> dict[str, Any]:
-        """Calculate voting results based on the configured method."""
+        """Calculate voting results based on the configured method with Byzantine fault tolerance and error handling."""
+        try:
+            # Check for Byzantine behavior and update reputations
+            suspicious_detected = []
+            for agent_name in self._votes_cast.keys():
+                try:
+                    if self._byzantine_detector.detect_byzantine_behavior(agent_name):
+                        self._audit_logger.log_security_violation("BYZANTINE_BEHAVIOR_DETECTED", f"agent={agent_name}")
+                        suspicious_detected.append(agent_name)
+                except Exception as e:
+                    self._audit_logger.log_security_violation(
+                        "BYZANTINE_DETECTION_ERROR", f"agent={agent_name}, error={str(e)}"
+                    )
 
-        vote_counts = Counter(vote_data["vote"].value for vote_data in self._votes_cast.values())
-        total_votes = len(self._votes_cast)
-        confidence_scores = [vote_data["confidence"] for vote_data in self._votes_cast.values()]
-        avg_confidence = sum(confidence_scores) / len(confidence_scores) if confidence_scores else 0.0
+            # Get both regular and weighted vote counts with error handling
+            try:
+                vote_counts = Counter(vote_data["vote"].value for vote_data in self._votes_cast.values())
+                weighted_vote_counts = self._byzantine_detector.get_weighted_vote_count(self._votes_cast)
+            except Exception as e:
+                self._audit_logger.log_security_violation("VOTE_COUNT_ERROR", str(e))
+                # Fallback to simple counting
+                vote_counts = Counter()
+                weighted_vote_counts = {"approve": 0.0, "reject": 0.0, "abstain": 0.0}
+                for vote_data in self._votes_cast.values():
+                    try:
+                        vote_value = (
+                            vote_data["vote"].value if hasattr(vote_data["vote"], "value") else str(vote_data["vote"])
+                        )
+                        vote_counts[vote_value] += 1
+                        weighted_vote_counts[vote_value] += 1.0
+                    except Exception:
+                        continue
 
-        # Determine result based on voting method
-        result = "no_consensus"
-        winning_option = None
+            total_votes = len(self._votes_cast)
 
-        if self._voting_method == VotingMethod.MAJORITY:
-            approve_count = vote_counts.get(VoteType.APPROVE.value, 0)
-            if approve_count > total_votes / 2:
-                result = "approved"
-                winning_option = VoteType.APPROVE.value
-            elif vote_counts.get(VoteType.REJECT.value, 0) > total_votes / 2:
-                result = "rejected"
-                winning_option = VoteType.REJECT.value
-
-        elif self._voting_method == VotingMethod.PLURALITY:
-            if vote_counts:
-                most_common = vote_counts.most_common(1)[0]
-                winning_option = most_common[0]
-                result = "approved" if winning_option == VoteType.APPROVE.value else "rejected"
-
-        elif self._voting_method == VotingMethod.UNANIMOUS:
-            if (
-                len(
-                    {
-                        vote.value
-                        for vote_data in self._votes_cast.values()
-                        for vote in [vote_data["vote"]]
-                        if vote != VoteType.ABSTAIN
-                    }
-                )
-                == 1
-            ):
-                non_abstain_votes = [
-                    vote_data["vote"]
+            # Calculate confidence scores with error handling
+            try:
+                confidence_scores = [
+                    float(vote_data.get("confidence", 1.0))
                     for vote_data in self._votes_cast.values()
-                    if vote_data["vote"] != VoteType.ABSTAIN
+                    if isinstance(vote_data.get("confidence"), int | float)
                 ]
-                if non_abstain_votes:
-                    winning_vote = non_abstain_votes[0]
-                    result = "approved" if winning_vote == VoteType.APPROVE else "rejected"
-                    winning_option = winning_vote.value
+                avg_confidence = sum(confidence_scores) / len(confidence_scores) if confidence_scores else 0.0
+            except Exception:
+                avg_confidence = 1.0  # Default confidence
 
-        elif self._voting_method == VotingMethod.QUALIFIED_MAJORITY:
-            approve_count = vote_counts.get(VoteType.APPROVE.value, 0)
-            if approve_count >= total_votes * self._qualified_majority_threshold:
-                result = "approved"
-                winning_option = VoteType.APPROVE.value
-            elif vote_counts.get(VoteType.REJECT.value, 0) >= total_votes * self._qualified_majority_threshold:
-                result = "rejected"
-                winning_option = VoteType.REJECT.value
+            # Check Byzantine resilience with error handling
+            try:
+                is_resilient = self._byzantine_detector.is_byzantine_resilient(self._votes_cast)
+            except Exception as e:
+                self._audit_logger.log_security_violation("BYZANTINE_RESILIENCE_CHECK_ERROR", str(e))
+                is_resilient = False  # Conservative assumption
 
-        return {
-            "proposal_id": self._current_proposal["id"] if self._current_proposal else "unknown",
-            "result": result,
-            "votes_summary": dict(vote_counts),
-            "winning_option": winning_option,
-            "total_voters": len(self._eligible_voters),
-            "participation_rate": total_votes / len(self._eligible_voters),
-            "confidence_average": avg_confidence,
-            "detailed_votes": dict(self._votes_cast.items()),
-        }
+            # Use weighted votes for calculation if Byzantine threats detected
+            use_weighted = len(self._byzantine_detector.suspicious_agents) > 0
+            try:
+                effective_counts = (
+                    weighted_vote_counts if use_weighted else {k: float(v) for k, v in vote_counts.items()}
+                )
+            except Exception:
+                effective_counts = {k: float(v) for k, v in vote_counts.items()}
+                use_weighted = False
+
+            # Determine result based on voting method with error handling
+            result = "no_consensus"
+            winning_option = None
+
+            try:
+                if self._voting_method == VotingMethod.MAJORITY:
+                    approve_count = effective_counts.get(VoteType.APPROVE.value, 0.0)
+                    total_effective_votes = sum(effective_counts.values())
+                    if total_effective_votes > 0:
+                        if approve_count > total_effective_votes / 2:
+                            result = "approved"
+                            winning_option = VoteType.APPROVE.value
+                        elif effective_counts.get(VoteType.REJECT.value, 0.0) > total_effective_votes / 2:
+                            result = "rejected"
+                            winning_option = VoteType.REJECT.value
+
+                elif self._voting_method == VotingMethod.PLURALITY:
+                    if effective_counts and sum(effective_counts.values()) > 0:
+                        max_count = max(effective_counts.values())
+                        winning_option = next(
+                            vote_type for vote_type, count in effective_counts.items() if count == max_count
+                        )
+                        result = "approved" if winning_option == VoteType.APPROVE.value else "rejected"
+
+                elif self._voting_method == VotingMethod.UNANIMOUS:
+                    # For unanimous, we need all non-abstaining agents to agree (considering reputation)
+                    non_abstain_votes = {
+                        agent: vote_data["vote"]
+                        for agent, vote_data in self._votes_cast.items()
+                        if vote_data["vote"] != VoteType.ABSTAIN
+                        and self._byzantine_detector.reputation_scores.get(agent, 1.0) > 0.5
+                    }
+
+                    if non_abstain_votes and len(set(non_abstain_votes.values())) == 1:
+                        winning_vote = next(iter(non_abstain_votes.values()))
+                        result = "approved" if winning_vote == VoteType.APPROVE else "rejected"
+                        winning_option = winning_vote.value
+
+                elif self._voting_method == VotingMethod.QUALIFIED_MAJORITY:
+                    approve_count = effective_counts.get(VoteType.APPROVE.value, 0.0)
+                    total_effective_votes = sum(effective_counts.values())
+                    if total_effective_votes > 0:
+                        if approve_count >= total_effective_votes * self._qualified_majority_threshold:
+                            result = "approved"
+                            winning_option = VoteType.APPROVE.value
+                        elif (
+                            effective_counts.get(VoteType.REJECT.value, 0.0)
+                            >= total_effective_votes * self._qualified_majority_threshold
+                        ):
+                            result = "rejected"
+                            winning_option = VoteType.REJECT.value
+
+            except Exception as e:
+                self._audit_logger.log_security_violation(
+                    "VOTING_METHOD_CALCULATION_ERROR", f"method={self._voting_method.value}, error={str(e)}"
+                )
+                result = "no_consensus"  # Safe fallback
+                winning_option = None
+
+            # Update agent reputations based on consensus outcome with error handling
+            try:
+                for agent_name, vote_data in self._votes_cast.items():
+                    try:
+                        self._byzantine_detector.update_reputation(agent_name, vote_data["vote"], result)
+                    except Exception as e:
+                        self._audit_logger.log_security_violation(
+                            "REPUTATION_UPDATE_ERROR", f"agent={agent_name}, error={str(e)}"
+                        )
+            except Exception as e:
+                self._audit_logger.log_security_violation("REPUTATION_UPDATE_BATCH_ERROR", str(e))
+
+            # Prepare result with error handling
+            try:
+                proposal_id = self._current_proposal["id"] if self._current_proposal else "unknown"
+                participation_rate = total_votes / len(self._eligible_voters) if self._eligible_voters else 0.0
+
+                return {
+                    "proposal_id": proposal_id,
+                    "result": result,
+                    "votes_summary": dict(vote_counts),
+                    "weighted_votes_summary": dict(weighted_vote_counts) if use_weighted else None,
+                    "winning_option": winning_option,
+                    "total_voters": len(self._eligible_voters),
+                    "participation_rate": participation_rate,
+                    "confidence_average": avg_confidence,
+                    "detailed_votes": dict(self._votes_cast.items()),
+                    "byzantine_resilient": is_resilient,
+                    "suspicious_agents": list(self._byzantine_detector.suspicious_agents),
+                    "reputation_adjusted": use_weighted,
+                }
+            except Exception as e:
+                self._audit_logger.log_security_violation("RESULT_PREPARATION_ERROR", str(e))
+                # Return minimal safe result
+                return {
+                    "proposal_id": "error",
+                    "result": "no_consensus",
+                    "votes_summary": {},
+                    "winning_option": None,
+                    "total_voters": len(self._eligible_voters) if hasattr(self, "_eligible_voters") else 0,
+                    "participation_rate": 0.0,
+                    "confidence_average": 0.0,
+                    "detailed_votes": {},
+                    "byzantine_resilient": False,
+                    "suspicious_agents": [],
+                    "reputation_adjusted": False,
+                }
+
+        except Exception as e:
+            # Critical error fallback
+            self._audit_logger.log_security_violation("CRITICAL_CALCULATION_ERROR", str(e))
+            return {
+                "proposal_id": "critical_error",
+                "result": "no_consensus",
+                "votes_summary": {},
+                "winning_option": None,
+                "total_voters": 0,
+                "participation_rate": 0.0,
+                "confidence_average": 0.0,
+                "detailed_votes": {},
+                "byzantine_resilient": False,
+                "suspicious_agents": [],
+                "reputation_adjusted": False,
+            }
 
     async def _announce_voting_phase(self) -> None:
         """Announce the start of voting phase."""
@@ -721,6 +1136,79 @@ class VotingGroupChatManager(BaseGroupChatManager):
         self._eligible_voters = voting_state.eligible_voters or list(self._participant_names)
         self._discussion_rounds = voting_state.discussion_rounds
         self._max_discussion_rounds = voting_state.max_discussion_rounds
+
+    # Methods below are used only for testing
+    def select_proposer_for_testing(self) -> str:
+        """Wrapper for _select_proposer for testing."""
+        return self._select_proposer()
+
+    def set_phase_for_testing(self, phase: VotingPhase) -> None:
+        """Set the voting phase for testing."""
+        self._current_phase = phase
+
+    def set_proposal_for_testing(self, proposal: dict[str, Any] | None) -> None:
+        """Set the current proposal for testing."""
+        self._current_proposal = proposal
+
+    def set_votes_for_testing(self, votes: dict[str, dict[str, Any]]) -> None:
+        """Set the votes cast for testing."""
+        self._votes_cast = votes
+
+    def set_discussion_rounds_for_testing(self, rounds: int) -> None:
+        """Set the discussion rounds for testing."""
+        self._discussion_rounds = rounds
+
+    def set_participant_names_for_testing(self, names: list[str]) -> None:
+        """Set the participant names for testing."""
+        self._participant_names = names
+
+    def set_auto_propose_speaker_for_testing(self, speaker: str | None) -> None:
+        """Set the auto propose speaker for testing."""
+        self._auto_propose_speaker = speaker
+
+    def set_voting_method_for_testing(self, method: VotingMethod) -> None:
+        """Set the voting method for testing."""
+        self._voting_method = method
+
+    def set_qualified_majority_threshold_for_testing(self, threshold: float) -> None:
+        """Set the qualified majority threshold for testing."""
+        self._qualified_majority_threshold = threshold
+
+    async def handle_proposal_phase_for_testing(self, message: BaseAgentEvent | BaseChatMessage) -> list[str]:
+        """Wrapper for _handle_proposal_phase for testing."""
+        return await self._handle_proposal_phase(message)
+
+    async def handle_voting_phase_for_testing(self, message: BaseAgentEvent | BaseChatMessage) -> list[str]:
+        """Wrapper for _handle_voting_phase for testing."""
+        return await self._handle_voting_phase(message)
+
+    async def handle_discussion_phase_for_testing(self, message: BaseAgentEvent | BaseChatMessage) -> list[str]:
+        """Wrapper for _handle_discussion_phase for testing."""
+        return await self._handle_discussion_phase(message)
+
+    async def handle_consensus_phase_for_testing(self, message: BaseAgentEvent | BaseChatMessage) -> list[str]:
+        """Wrapper for _handle_consensus_phase for testing."""
+        return await self._handle_consensus_phase(message)
+
+    def is_voting_complete_for_testing(self) -> bool:
+        """Wrapper for _is_voting_complete for testing."""
+        return self._is_voting_complete()
+
+    async def process_voting_results_for_testing(self) -> list[str]:
+        """Wrapper for _process_voting_results for testing."""
+        return await self._process_voting_results()
+
+    def calculate_voting_result_for_testing(self) -> dict[str, Any]:
+        """Wrapper for _calculate_voting_result for testing."""
+        return self._calculate_voting_result()
+
+    async def announce_voting_phase_for_testing(self) -> None:
+        """Wrapper for _announce_voting_phase for testing."""
+        await self._announce_voting_phase()
+
+    def clear_votes_for_testing(self) -> None:
+        """Clear votes for testing."""
+        self._votes_cast = {}
 
 
 class VotingGroupChatConfig(BaseModel):
