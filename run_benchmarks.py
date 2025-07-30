@@ -16,6 +16,92 @@ from benchmarks.runner import BenchmarkRunner
 from benchmarks.scenarios import BenchmarkScenario, ScenarioType, get_scenario_by_name
 
 
+async def run_validation_test() -> bool:
+    """Run quick validation tests for all scenario types."""
+    print("=== System Validation Test ===")
+    print("Testing all scenario types with simple prompts...")
+    
+    if not os.getenv("OPENAI_API_KEY"):
+        print("❌ OPENAI_API_KEY not set. Please set it to run benchmarks.")
+        return False
+
+    try:
+        runner = BenchmarkRunner(model_name="gpt-4o-mini", rate_limit_delay=0.5, max_retries=3)
+        
+        # Quick scenarios for each type
+        test_scenarios = [
+            BenchmarkScenario(
+                name="validate_code_review",
+                scenario_type=ScenarioType.CODE_REVIEW,
+                description="Quick code review validation",
+                task_prompt="Should we approve this fix: change `x = 5` to `x == 5`? Yes/No.",
+                agent_personas=[
+                    {"name": "Dev1", "role": "Developer"},
+                    {"name": "Dev2", "role": "Reviewer"},
+                    {"name": "Lead", "role": "Lead"},
+                ],
+            ),
+            BenchmarkScenario(
+                name="validate_architecture",
+                scenario_type=ScenarioType.ARCHITECTURE_DECISION,
+                description="Quick architecture validation",
+                task_prompt="For a simple blog, choose: SQL database or NoSQL? One sentence reasoning.",
+                agent_personas=[
+                    {"name": "Architect", "role": "Solutions Architect"},
+                    {"name": "Backend", "role": "Backend Developer"},
+                    {"name": "DBA", "role": "Database Admin"},
+                ],
+            ),
+            BenchmarkScenario(
+                name="validate_moderation",
+                scenario_type=ScenarioType.CONTENT_MODERATION,
+                description="Quick moderation validation",
+                task_prompt="Should this be approved: 'Great product, highly recommend!'? Approve/Reject.",
+                agent_personas=[
+                    {"name": "Mod1", "role": "Content Moderator"},
+                    {"name": "Mod2", "role": "Senior Moderator"},
+                    {"name": "Manager", "role": "Community Manager"},
+                ],
+            ),
+        ]
+        
+        print(f"Running {len(test_scenarios)} validation tests...")
+        all_passed = True
+        
+        for i, scenario in enumerate(test_scenarios, 1):
+            print(f"\n[{i}/{len(test_scenarios)}] Testing {scenario.scenario_type.value}...")
+            try:
+                result = await runner.run_comparison(scenario, VotingMethod.MAJORITY, save_results=False)
+                voting_ok = result.voting_metrics.decision_reached
+                standard_ok = result.standard_metrics.decision_reached
+                
+                if voting_ok and standard_ok:
+                    print(f"   ✅ {scenario.scenario_type.value}: PASSED")
+                    print(f"      Voting: {result.voting_metrics.duration_seconds:.1f}s, {result.voting_metrics.total_messages} msgs")
+                    print(f"      Standard: {result.standard_metrics.duration_seconds:.1f}s, {result.standard_metrics.total_messages} msgs")
+                else:
+                    print(f"   ❌ {scenario.scenario_type.value}: FAILED")
+                    print(f"      Voting decision: {voting_ok}, Standard decision: {standard_ok}")
+                    all_passed = False
+                    
+            except Exception as e:
+                print(f"   ❌ {scenario.scenario_type.value}: ERROR - {e}")
+                all_passed = False
+        
+        if all_passed:
+            print(f"\n🎉 System Validation: ALL TESTS PASSED!")
+            print("Your voting extension is working correctly across all scenario types.")
+        else:
+            print(f"\n⚠️  System Validation: SOME TESTS FAILED")
+            print("Check the errors above to diagnose issues.")
+            
+        return all_passed
+        
+    except Exception as e:
+        print(f"❌ Validation failed: {e}")
+        return False
+
+
 async def run_quick_test() -> bool:
     """Run a quick test to verify everything works."""
     print("=== Quick Benchmark Test ===")
@@ -29,7 +115,7 @@ async def run_quick_test() -> bool:
 
     try:
         print("debug: Creating BenchmarkRunner with model gpt-4o-mini")
-        runner = BenchmarkRunner(model_name="gpt-4o-mini")
+        runner = BenchmarkRunner(model_name="gpt-4o-mini", rate_limit_delay=2.0, max_retries=5)
 
         # Create a simple test scenario
         print("debug: Creating test scenario for code review")
@@ -58,7 +144,7 @@ async def run_quick_test() -> bool:
         print(f"   Standard approach: {result.standard_metrics.duration_seconds:.1f}s")
         print(f"   Voting messages: {result.voting_metrics.total_messages}")
         print(f"   Standard messages: {result.standard_metrics.total_messages}")
-        print(f"debug: Quick test results - voting success: {result.voting_metrics.success}, standard success: {result.standard_metrics.success}")
+        print(f"debug: Quick test results - voting decision: {result.voting_metrics.decision_reached}, standard decision: {result.standard_metrics.decision_reached}")
 
         return True
 
@@ -85,7 +171,7 @@ async def run_full_benchmarks(
         print("debug: Using default voting methods: MAJORITY, QUALIFIED_MAJORITY, UNANIMOUS")
 
     print("debug: Creating BenchmarkRunner with model gpt-4o-mini")
-    runner = BenchmarkRunner(model_name="gpt-4o-mini")
+    runner = BenchmarkRunner(model_name="gpt-4o-mini", rate_limit_delay=2.0, max_retries=5)
 
     all_results: list[ComparisonResults] = []
 
@@ -141,7 +227,7 @@ async def run_scalability_test() -> None:
 
     # Run a basic scalability comparison
     print("debug: Creating BenchmarkRunner for scalability test")
-    runner = BenchmarkRunner(model_name="gpt-4o-mini")
+    runner = BenchmarkRunner(model_name="gpt-4o-mini", rate_limit_delay=2.0, max_retries=5)
 
     print("debug: Getting bug_detection_security scenario")
     scenario = get_scenario_by_name("bug_detection_security")
@@ -164,8 +250,9 @@ def main() -> None:
         formatter_class=RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python run_benchmarks.py --quick                    # Quick test
-  python run_benchmarks.py --full                     # All scenarios
+  python run_benchmarks.py --quick                    # Quick test (code review only)
+  python run_benchmarks.py --validate                 # Validate all scenario types (2-3 minutes)
+  python run_benchmarks.py --full                     # All scenarios (30+ minutes)
   python run_benchmarks.py --code-review              # Code review only
   python run_benchmarks.py --architecture             # Architecture only
   python run_benchmarks.py --moderation              # Content moderation only
@@ -176,6 +263,7 @@ Examples:
 
     # Test options
     parser.add_argument("--quick", action="store_true", help="Run quick test")
+    parser.add_argument("--validate", action="store_true", help="Run validation tests for all scenario types")
     parser.add_argument("--full", action="store_true", help="Run full benchmark suite")
     parser.add_argument("--scalability", action="store_true", help="Run scalability tests")
 
@@ -227,6 +315,13 @@ Examples:
         success = asyncio.run(run_quick_test())
         if not success:
             print("debug: Quick test failed, exiting with code 1")
+            sys.exit(1)
+
+    if args.validate:
+        print("debug: Running validation tests")
+        success = asyncio.run(run_validation_test())
+        if not success:
+            print("debug: Validation tests failed, exiting with code 1")
             sys.exit(1)
 
     if args.full or any([args.code_review, args.architecture, args.moderation]):

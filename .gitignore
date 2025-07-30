@@ -246,3 +246,7 @@ local_settings.py
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Benchmark results
+benchmark_results/
+
