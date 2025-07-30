@@ -158,7 +158,7 @@ class SecurityValidator:
     @staticmethod
     def sanitize_text(text: str, max_length: int) -> str:
         """Sanitize text input to prevent injection attacks."""
-        if not isinstance(text, str):
+        if not text:
             raise ValueError("Input must be a string")
 
         # Remove null bytes and control characters
@@ -184,7 +184,7 @@ class SecurityValidator:
     @staticmethod
     def validate_agent_name(name: str) -> str:
         """Validate agent name to prevent impersonation."""
-        if not isinstance(name, str):
+        if not name:
             raise ValueError("Agent name must be a string")
 
         name = name.strip()
@@ -226,7 +226,7 @@ class SecurityValidator:
 class AuditLogger:
     """Handles secure audit logging for voting actions."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.audit_logger = logging.getLogger("autogen_voting.audit")
 
     def log_proposal_created(self, proposal_id: str, proposer: str, title: str) -> None:
@@ -916,7 +916,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
         """Calculate voting results based on the configured method with Byzantine fault tolerance and error handling."""
         try:
             # Check for Byzantine behavior and update reputations
-            suspicious_detected = []
+            suspicious_detected: list[str] = []
             for agent_name in self._votes_cast.keys():
                 try:
                     if self._byzantine_detector.detect_byzantine_behavior(agent_name):
@@ -928,23 +928,25 @@ class VotingGroupChatManager(BaseGroupChatManager):
                     )
 
             # Get both regular and weighted vote counts with error handling
+            vote_counts: Counter[str] = Counter[str]()
+            weighted_counts: dict[str, float] = {"approve": 0.0, "reject": 0.0, "abstain": 0.0}
+
             try:
-                vote_counts = Counter(vote_data["vote"].value for vote_data in self._votes_cast.values())
-                weighted_vote_counts = self._byzantine_detector.get_weighted_vote_count(self._votes_cast)
+                vote_counts = Counter[str](vote_data["vote"].value for vote_data in self._votes_cast.values())
+                weighted_counts = self._byzantine_detector.get_weighted_vote_count(self._votes_cast)
             except Exception as e:
                 self._audit_logger.log_security_violation("VOTE_COUNT_ERROR", str(e))
-                # Fallback to simple counting
-                vote_counts = Counter()
-                weighted_vote_counts = {"approve": 0.0, "reject": 0.0, "abstain": 0.0}
+                # Fallback to simple counting - use default values initialized above
                 for vote_data in self._votes_cast.values():
                     try:
                         vote_value = (
                             vote_data["vote"].value if hasattr(vote_data["vote"], "value") else str(vote_data["vote"])
                         )
                         vote_counts[vote_value] += 1
-                        weighted_vote_counts[vote_value] += 1.0
-                    except Exception:
-                        continue
+                        weighted_counts[vote_value] += 1.0
+                    except Exception as ex:
+                        self._audit_logger.log_security_violation("VOTE_VALUE_ERROR", str(ex))
+                        # Continue processing other votes
 
             total_votes = len(self._votes_cast)
 
@@ -969,8 +971,8 @@ class VotingGroupChatManager(BaseGroupChatManager):
             # Use weighted votes for calculation if Byzantine threats detected
             use_weighted = len(self._byzantine_detector.suspicious_agents) > 0
             try:
-                effective_counts = (
-                    weighted_vote_counts if use_weighted else {k: float(v) for k, v in vote_counts.items()}
+                effective_counts: dict[str, float] = (
+                    weighted_counts if use_weighted else {k: float(v) for k, v in vote_counts.items()}
                 )
             except Exception:
                 effective_counts = {k: float(v) for k, v in vote_counts.items()}
@@ -978,7 +980,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
 
             # Determine result based on voting method with error handling
             result = "no_consensus"
-            winning_option = None
+            winning_option: str | None = None
 
             try:
                 if self._voting_method == VotingMethod.MAJORITY:
@@ -1056,7 +1058,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
                     "proposal_id": proposal_id,
                     "result": result,
                     "votes_summary": dict(vote_counts),
-                    "weighted_votes_summary": dict(weighted_vote_counts) if use_weighted else None,
+                    "weighted_votes_summary": dict(weighted_counts) if use_weighted else None,
                     "winning_option": winning_option,
                     "total_voters": len(self._eligible_voters),
                     "participation_rate": participation_rate,
