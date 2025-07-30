@@ -74,16 +74,29 @@ ignore = ["E501", "B008", "C901", "T201"]
 
 [tool.pyright]
 include = ["src"]
+exclude = ["tests", "benchmarks", "examples", "run_benchmarks.py"]
 typeCheckingMode = "strict"
 pythonVersion = "3.10"
 
 [tool.mypy]
 python_version = "3.10"
 strict = true
-exclude = ["^build/", "^dist/"]
+exclude = ["^build/", "^dist/", "^tests/", "^benchmarks/", "^examples/", "^run_benchmarks.py"]
 
 [[tool.mypy.overrides]]
 module = "tests.*"
+strict = false
+
+[[tool.mypy.overrides]]
+module = "benchmarks.*"
+strict = false
+
+[[tool.mypy.overrides]]
+module = "examples.*"
+strict = false
+
+[[tool.mypy.overrides]]
+module = "run_benchmarks"
 strict = false
 
 [tool.pytest.ini_options]

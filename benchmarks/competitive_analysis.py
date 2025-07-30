@@ -10,16 +10,23 @@ implementations are planned for future releases.
 
 import asyncio
 import json
+import logging
 import statistics
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -58,10 +65,31 @@ class FrameworkMetrics:
     integration_ease: int  # 1-10 scale
 
 
+class ScoreData(TypedDict):
+    """Typed dictionary for score data."""
+
+    performance: float
+    quality: float
+    scalability: float
+    developer_experience: float
+    enterprise_readiness: float
+    total_score: float
+
+
+class CompetitiveAnalysisResults(TypedDict):
+    """Typed dictionary for the results of the competitive analysis."""
+
+    timestamp: str
+    framework_scores: Dict[str, ScoreData]
+    framework_metrics: Dict[str, Dict[str, Any]]
+    market_leader: str
+    key_insights: List[str]
+
+
 class CompetitiveAnalyzer:
     """Analyzer for competitive framework comparison."""
 
-    def __init__(self, results_dir: str = "benchmark_results/competitive"):
+    def __init__(self, results_dir: str = "benchmark_results/competitive") -> None:
         self.results_dir = Path(results_dir)
         self.results_dir.mkdir(parents=True, exist_ok=True)
 
@@ -206,10 +234,10 @@ class CompetitiveAnalyzer:
             ),
         }
 
-    def calculate_competitive_scores(self) -> dict[str, dict[str, float]]:
+    def calculate_competitive_scores(self) -> Dict[str, ScoreData]:
         """Calculate comprehensive competitive scores."""
 
-        scores = {}
+        scores: Dict[str, ScoreData] = {}
 
         for name, framework in self.frameworks.items():
             # Performance score (30% weight)
@@ -271,7 +299,7 @@ class CompetitiveAnalyzer:
         # Sort frameworks by total score
         sorted_frameworks = sorted(scores.items(), key=lambda x: x[1]["total_score"], reverse=True)
 
-        report = []
+        report: List[str] = []
         report.append("# Competitive Analysis: Multi-Agent Orchestration Frameworks")
         report.append(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         report.append("")
@@ -280,7 +308,7 @@ class CompetitiveAnalyzer:
         report.append("## Executive Summary")
         report.append("")
         winner = sorted_frameworks[0]
-        second_place = sorted_frameworks[1] if len(sorted_frameworks) > 1 else None
+        second_place: Optional[Tuple[str, ScoreData]] = sorted_frameworks[1] if len(sorted_frameworks) > 1 else None
 
         if winner[0] == "autogen_voting":
             advantage = (winner[1]["total_score"] - second_place[1]["total_score"]) * 100 if second_place else 0
@@ -390,8 +418,8 @@ class CompetitiveAnalyzer:
             report.append("")
 
             # Strengths and weaknesses
-            strengths = []
-            weaknesses = []
+            strengths: List[str] = []
+            weaknesses: List[str] = []
 
             if framework.avg_latency < 1.0:
                 strengths.append("Low latency performance")
@@ -484,6 +512,8 @@ class CompetitiveAnalyzer:
 
         # Create figure with subplots
         fig, axes = plt.subplots(2, 3, figsize=(20, 12))
+        fig: Figure = fig
+        axes: np.ndarray[Any, np.dtype[Any]] = axes
         fig.suptitle("Multi-Agent Framework Competitive Analysis", fontsize=16, fontweight="bold")
 
         # Prepare data
@@ -508,8 +538,8 @@ class CompetitiveAnalyzer:
 
         # 2. Performance Metrics Radar
         performance_metrics = ["avg_latency", "throughput", "consensus_quality", "fault_tolerance"]
-        autogen_values = []
-        competitor_avg = []
+        autogen_values: List[float] = []
+        competitor_avg: List[float] = []
 
         for metric in performance_metrics:
             autogen_val = getattr(self.frameworks["autogen_voting"], metric)
@@ -527,9 +557,9 @@ class CompetitiveAnalyzer:
             competitor_avg.append(statistics.mean(competitor_vals))
 
         # Normalize values for radar chart
-        max_vals = [max(av, ca) for av, ca in zip(autogen_values, competitor_avg, strict=False)]
-        autogen_norm = [av / mv for av, mv in zip(autogen_values, max_vals, strict=False)]
-        competitor_norm = [ca / mv for ca, mv in zip(competitor_avg, max_vals, strict=False)]
+        max_vals = [max(av, ca) for av, ca in zip(autogen_values, competitor_avg, strict=True)]
+        autogen_norm = [av / mv for av, mv in zip(autogen_values, max_vals, strict=True)]
+        competitor_norm = [ca / mv for ca, mv in zip(competitor_avg, max_vals, strict=True)]
 
         angles = np.linspace(0, 2 * np.pi, len(performance_metrics), endpoint=False)
         angles = np.concatenate((angles, [angles[0]]))  # Complete the circle
@@ -577,7 +607,7 @@ class CompetitiveAnalyzer:
             "monitoring_capabilities",
             "integration_ease",
         ]
-        heatmap_data = []
+        heatmap_data: List[List[int]] = []
 
         for name in framework_names:
             row = [getattr(self.frameworks[name], metric) for metric in enterprise_metrics]
@@ -618,7 +648,7 @@ class CompetitiveAnalyzer:
         score_categories = ["performance", "quality", "scalability", "developer_experience", "enterprise_readiness"]
         category_weights = [0.30, 0.25, 0.20, 0.15, 0.10]
 
-        bottom = np.zeros(len(framework_names))
+        bottom: np.ndarray[Any, np.dtype[np.float64]] = np.zeros(len(framework_names))
         colors_stack = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
 
         for i, category in enumerate(score_categories):
@@ -644,14 +674,14 @@ class CompetitiveAnalyzer:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         viz_path = self.results_dir / f"competitive_analysis_{timestamp}.png"
         plt.savefig(viz_path, dpi=300, bbox_inches="tight")
-        print(f"📊 Competitive analysis visualization saved to {viz_path}")
+        logger.info(f"📊 Competitive analysis visualization saved to {viz_path}")
 
         plt.show()
 
-    async def run_comprehensive_competitive_analysis(self) -> dict[str, Any]:
+    async def run_comprehensive_competitive_analysis(self) -> CompetitiveAnalysisResults:
         """Run comprehensive competitive analysis."""
 
-        print("🏁 Starting comprehensive competitive analysis...")
+        logger.info("🏁 Starting comprehensive competitive analysis...")
 
         # Calculate scores and generate report
         scores = self.calculate_competitive_scores()
@@ -661,10 +691,10 @@ class CompetitiveAnalyzer:
         self.create_competitive_visualizations()
 
         # Prepare summary data
-        analysis_results = {
+        analysis_results: CompetitiveAnalysisResults = {
             "timestamp": datetime.now().isoformat(),
             "framework_scores": scores,
-            "framework_metrics": {name: framework.__dict__ for name, framework in self.frameworks.items()},
+            "framework_metrics": {name: asdict(framework) for name, framework in self.frameworks.items()},
             "market_leader": max(scores.items(), key=lambda x: x[1]["total_score"])[0],
             "key_insights": self._generate_key_insights(scores),
         }
@@ -680,16 +710,16 @@ class CompetitiveAnalyzer:
         with open(self.results_dir / f"competitive_report_{timestamp}.md", "w") as f:
             f.write(report)
 
-        print("✅ Competitive analysis complete!")
-        print(f"📊 Results saved to competitive_analysis_{timestamp}.json")
-        print(f"📝 Report saved to competitive_report_{timestamp}.md")
+        logger.info("✅ Competitive analysis complete!")
+        logger.info(f"📊 Results saved to competitive_analysis_{timestamp}.json")
+        logger.info(f"📝 Report saved to competitive_report_{timestamp}.md")
 
         return analysis_results
 
-    def _generate_key_insights(self, scores: dict[str, dict[str, float]]) -> list[str]:
+    def _generate_key_insights(self, scores: Dict[str, ScoreData]) -> List[str]:
         """Generate key insights from competitive analysis."""
 
-        insights = []
+        insights: List[str] = []
 
         # Find market leader
         market_leader = max(scores.items(), key=lambda x: x[1]["total_score"])
@@ -699,7 +729,7 @@ class CompetitiveAnalyzer:
             # Find specific advantages
             autogen_scores = scores["autogen_voting"]
             for category, score in autogen_scores.items():
-                if category != "total_score" and score > 0.8:
+                if category != "total_score" and isinstance(score, (int, float)) and score > 0.8:
                     insights.append(f"AutoGen Voting excels in {category.replace('_', ' ')} ({score:.1%})")
 
         # Performance insights
@@ -722,7 +752,7 @@ class CompetitiveAnalyzer:
         return insights
 
 
-async def main():
+async def main() -> None:
     """Run competitive analysis."""
     analyzer = CompetitiveAnalyzer()
     results = await analyzer.run_comprehensive_competitive_analysis()
@@ -731,11 +761,11 @@ async def main():
     market_leader = results["market_leader"]
     leader_score = results["framework_scores"][market_leader]["total_score"]
 
-    print(f"\n🏆 Market Leader: {analyzer.frameworks[market_leader].name}")
-    print(f"📊 Score: {leader_score:.3f}/1.000")
-    print("\n🎯 Key Insights:")
+    logger.info(f"\n🏆 Market Leader: {analyzer.frameworks[market_leader].name}")
+    logger.info(f"📊 Score: {leader_score:.3f}/1.000")
+    logger.info("\n🎯 Key Insights:")
     for insight in results["key_insights"]:
-        print(f"  • {insight}")
+        logger.info(f"  • {insight}")
 
 
 if __name__ == "__main__":

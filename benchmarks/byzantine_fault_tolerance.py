@@ -584,7 +584,7 @@ class ByzantineBenchmarkSuite:
         return "\n".join(report)
 
 
-async def main():
+async def main() -> None:
     """Run Byzantine fault tolerance benchmarks."""
     print("🛡️ Starting Byzantine Fault Tolerance Benchmark Suite...")
 
