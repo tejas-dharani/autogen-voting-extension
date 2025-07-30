@@ -50,15 +50,15 @@ class BenchmarkRunner:
         require_reasoning: bool = True,
     ) -> BenchmarkMetrics:
         """Run a scenario using VotingGroupChat."""
-        print(f"🔧 DEBUG: RUNNER - Starting voting scenario '{scenario.name}'")
-        print(f"🔧 DEBUG: RUNNER - Scenario type: {scenario.scenario_type.value}")
+        print(f"debug: Starting voting scenario '{scenario.name}'")
+        print(f"debug: Scenario type: {scenario.scenario_type.value}")
 
         agents = self.create_agents(scenario.agent_personas)
-        print(f"🔧 DEBUG: RUNNER - Created {len(agents)} agents: {[a.name for a in agents]}")
-        print(f"🔧 DEBUG: RUNNER - Agent personas: {[p['role'][:50] + '...' for p in scenario.agent_personas]}")
+        print(f"debug: Created {len(agents)} agents: {[a.name for a in agents]}")
+        print(f"debug: Agent personas: {[p['role'][:50] + '...' for p in scenario.agent_personas]}")
 
         metrics = self.metrics_collector.start_collection()
-        print("🔧 DEBUG: RUNNER - Started metrics collection")
+        print("debug: Started metrics collection")
 
         # Configure voting team
         voting_team = VotingGroupChat(
@@ -69,100 +69,100 @@ class BenchmarkRunner:
             max_discussion_rounds=max_discussion_rounds,
             termination_condition=MaxMessageTermination(30),
         )
-        print("🔧 DEBUG: RUNNER - Configured voting team:")
-        print(f"🔧 DEBUG: RUNNER -   Method: {voting_method.value}")
-        print(f"🔧 DEBUG: RUNNER -   Threshold: {qualified_majority_threshold}")
-        print(f"🔧 DEBUG: RUNNER -   Max rounds: {max_discussion_rounds}")
-        print(f"🔧 DEBUG: RUNNER -   Require reasoning: {require_reasoning}")
-        print("🔧 DEBUG: RUNNER -   Max turns: 30")
+        print("debug: Configured voting team:")
+        print(f"debug:   Method: {voting_method.value}")
+        print(f"debug:   Threshold: {qualified_majority_threshold}")
+        print(f"debug:   Max rounds: {max_discussion_rounds}")
+        print(f"debug:   Require reasoning: {require_reasoning}")
+        print("debug:   Max turns: 30")
 
         # Set metrics collector on the voting team
         voting_team.set_metrics_collector(self.metrics_collector)
-        print("🔧 DEBUG: RUNNER - Set metrics collector on voting team")
+        print("debug: Set metrics collector on voting team")
 
         try:
             # Run the scenario
-            print(f"🔧 DEBUG: RUNNER - Task prompt: {scenario.task_prompt[:200]}...")
-            print("🔧 DEBUG: RUNNER - Running voting team...")
+            print(f"debug: Task prompt: {scenario.task_prompt[:200]}...")
+            print("debug: Running voting team...")
             result = await voting_team.run(task=scenario.task_prompt)
-            print(f"🔧 DEBUG: RUNNER - Scenario completed with result type: {type(result)}")
-            print(f"🔧 DEBUG: RUNNER - Result attributes: {[attr for attr in dir(result) if not attr.startswith('_')]}")
+            print(f"debug: Scenario completed with result type: {type(result)}")
+            print(f"debug: Result attributes: {[attr for attr in dir(result) if not attr.startswith('_')]}")
 
             # Extract voting results from the team's manager
-            print("🔧 DEBUG: RUNNER - Extracting voting results from team manager...")
+            print("debug: Extracting voting results from team manager...")
             try:
                 # Access the voting manager through the runtime's instantiated agents
                 runtime = voting_team._runtime  # type: ignore[attr-defined]
                 manager_name = voting_team._group_chat_manager_name  # type: ignore[attr-defined]
-                print(f"🔧 DEBUG: RUNNER - Looking for manager '{manager_name}' in runtime")
+                print(f"debug: Looking for manager '{manager_name}' in runtime")
 
                 # Check all instantiated agents
                 instantiated_agents = getattr(runtime, "_instantiated_agents", {})
                 agent_keys = list(instantiated_agents.keys()) if instantiated_agents else []
-                print(f"🔧 DEBUG: RUNNER - Available agents ({len(agent_keys)}): {agent_keys}")
+                print(f"debug: Available agents ({len(agent_keys)}): {agent_keys}")
 
                 # Try to find the manager in instantiated agents
                 manager: Any = None
                 for agent_id, agent_instance in instantiated_agents.items():
                     agent_type_name = getattr(type(agent_instance), "__name__", "Unknown")  # type: ignore[arg-type]
-                    print(f"🔧 DEBUG: RUNNER - Checking agent: {agent_id} -> {agent_type_name}")
+                    print(f"debug: Checking agent: {agent_id} -> {agent_type_name}")
                     if manager_name in str(agent_id) or "VotingGroupChatManager" in agent_type_name:
                         manager = agent_instance
                         manager_type_name = getattr(type(manager), "__name__", "Unknown")  # type: ignore[arg-type]
-                        print(f"🔧 DEBUG: RUNNER - Found manager: {manager_type_name}")
+                        print(f"debug: Found manager: {manager_type_name}")
                         break
 
                 if manager and hasattr(manager, "votes_cast"):
                     votes_cast = getattr(manager, "votes_cast", {})
-                    print(f"🔧 DEBUG: RUNNER - Found votes cast: {len(votes_cast)} votes")
+                    print(f"debug: Found votes cast: {len(votes_cast)} votes")
                     votes_cast_dict = cast(dict[str, Any], votes_cast)
                     for agent, vote_data in votes_cast_dict.items():
                         vote_data_dict = cast(dict[str, Any], vote_data)
                         vote_obj = vote_data_dict["vote"]
                         vote_val = vote_obj.value if hasattr(vote_obj, "value") else str(vote_obj)
-                        print(f"🔧 DEBUG: RUNNER -   {agent}: {vote_val}")
+                        print(f"debug:   {agent}: {vote_val}")
 
                     # Votes are already recorded by the manager during the process
                     # Don't double-count here - just verify the metrics match
-                    print("🔧 DEBUG: RUNNER - Verifying votes in metrics match manager votes...")
+                    print("debug: Verifying votes in metrics match manager votes...")
                     current_vote_counts: dict[str, int] = {}
                     for _agent_name, vote_data in votes_cast_dict.items():
                         vote_data_dict = cast(dict[str, Any], vote_data)
                         vote_obj = vote_data_dict["vote"]
                         vote_value = vote_obj.value if hasattr(vote_obj, "value") else str(vote_obj)
                         current_vote_counts[vote_value] = current_vote_counts.get(vote_value, 0) + 1
-                    print(f"🔧 DEBUG: RUNNER - Manager vote counts: {current_vote_counts}")
-                    print(f"🔧 DEBUG: RUNNER - Metrics vote counts: {metrics.final_vote_counts}")
+                    print(f"debug: Manager vote counts: {current_vote_counts}")
+                    print(f"debug: Metrics vote counts: {metrics.final_vote_counts}")
 
                     if votes_cast_dict:
                         metrics.decision_reached = True
                         metrics.consensus_type = voting_method.value
-                        print(f"🔧 DEBUG: RUNNER - Successfully extracted {len(votes_cast_dict)} votes")
-                        print(f"🔧 DEBUG: RUNNER - Set decision_reached=True, consensus_type={voting_method.value}")
+                        print(f"debug: Successfully extracted {len(votes_cast_dict)} votes")
+                        print(f"debug: Set decision_reached=True, consensus_type={voting_method.value}")
                     else:
-                        print("🔧 DEBUG: RUNNER - No votes were cast")
+                        print("debug: No votes were cast")
 
                     # Also check current phase and proposal
                     current_phase = getattr(manager, "current_phase", "unknown")
                     current_proposal = getattr(manager, "current_proposal", None)
-                    print(f"🔧 DEBUG: RUNNER - Final phase: {current_phase}")
+                    print(f"debug: Final phase: {current_phase}")
                     proposal_id = "none"
                     if isinstance(current_proposal, dict):
                         proposal_dict = cast(dict[str, Any], current_proposal)
                         proposal_id = proposal_dict.get("id", "none")
-                    print(f"🔧 DEBUG: RUNNER - Proposal ID: {proposal_id}")
+                    print(f"debug: Proposal ID: {proposal_id}")
                 else:
-                    print("🔧 DEBUG: RUNNER - Could not access voting manager or votes_cast")
+                    print("debug: Could not access voting manager or votes_cast")
                     if manager:
-                        print(f"🔧 DEBUG: RUNNER - Manager has votes_cast: {hasattr(manager, 'votes_cast')}")
+                        print(f"debug: Manager has votes_cast: {hasattr(manager, 'votes_cast')}")
                         manager_attrs = dir(manager)
                         vote_attrs = [attr for attr in manager_attrs if "vote" in attr.lower()]
-                        print(f"🔧 DEBUG: RUNNER - Manager vote attributes: {vote_attrs}")
+                        print(f"debug: Manager vote attributes: {vote_attrs}")
                     else:
-                        print("🔧 DEBUG: RUNNER - Manager not found")
+                        print("debug: Manager not found")
 
             except Exception as e:
-                print(f"🚀 RUNNER: Error extracting voting results: {e}")
+                print(f"debug: Error extracting voting results: {e}")
                 import traceback
 
                 traceback.print_exc()
@@ -171,7 +171,7 @@ class BenchmarkRunner:
             metrics.complete_benchmark()
 
         except Exception as e:
-            print(f"❌ RUNNER: Error in voting scenario: {e}")
+            print(f"debug: Error in voting scenario: {e}")
             import traceback
 
             traceback.print_exc()
@@ -184,10 +184,10 @@ class BenchmarkRunner:
 
     async def run_standard_scenario(self, scenario: BenchmarkScenario, max_turns: int = 20) -> BenchmarkMetrics:
         """Run a scenario using standard GroupChat."""
-        print(f"🔧 DEBUG: STANDARD_RUNNER - Starting standard scenario '{scenario.name}'")
+        print(f"debug: Starting standard scenario '{scenario.name}'")
 
         agents = self.create_agents(scenario.agent_personas)
-        print(f"🔧 DEBUG: STANDARD_RUNNER - Created {len(agents)} agents")
+        print(f"debug: Created {len(agents)} agents")
         metrics = self.metrics_collector.start_collection()
 
         # Configure standard group chat (using RoundRobinGroupChat as standard comparison)
@@ -195,17 +195,17 @@ class BenchmarkRunner:
             participants=agents,  # type: ignore
             termination_condition=MaxMessageTermination(max_turns),
         )
-        print("🔧 DEBUG: STANDARD_RUNNER - Configured RoundRobinGroupChat")
+        print("debug: Configured RoundRobinGroupChat")
 
         try:
             # Run the scenario
-            print("🔧 DEBUG: STANDARD_RUNNER - Running standard team...")
+            print("debug: Running standard team...")
             result = await standard_team.run(task=scenario.task_prompt)
-            print("🔧 DEBUG: STANDARD_RUNNER - Standard scenario completed")
+            print("debug: Standard scenario completed")
 
             # Extract messages and estimate metrics from result
             if hasattr(result, "messages") and result.messages:
-                print(f"🔧 DEBUG: STANDARD_RUNNER - Found {len(result.messages)} messages in result")
+                print(f"debug: Found {len(result.messages)} messages in result")
                 for message in result.messages:
                     source = getattr(message, "source", "unknown")
                     if source != "user":
@@ -215,7 +215,7 @@ class BenchmarkRunner:
                         metrics.add_message(source)
                         metrics.add_tokens(estimated_tokens)
                         metrics.add_api_call()
-                        print(f"🔧 DEBUG: STANDARD_RUNNER - Recorded message from {source}, {estimated_tokens} tokens")
+                        print(f"debug: Recorded message from {source}, {estimated_tokens} tokens")
 
             # Basic completion tracking
             metrics.decision_reached = True
@@ -224,11 +224,11 @@ class BenchmarkRunner:
             # Mark completion
             metrics.complete_benchmark()
             print(
-                f"🔧 DEBUG: STANDARD_RUNNER - Final metrics: {metrics.total_messages} messages, {metrics.token_usage} tokens, {metrics.api_calls} API calls"
+                f"debug: Final metrics: {metrics.total_messages} messages, {metrics.token_usage} tokens, {metrics.api_calls} API calls"
             )
 
         except Exception as e:
-            print(f"🔧 DEBUG: STANDARD_RUNNER - Error in standard scenario: {e}")
+            print(f"debug: Error in standard scenario: {e}")
             import traceback
 
             traceback.print_exc()

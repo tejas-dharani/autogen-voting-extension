@@ -43,11 +43,13 @@ class BenchmarkMetrics:
         """Mark benchmark as complete and calculate duration."""
         self.end_time = time.time()
         self.duration_seconds = self.end_time - self.start_time
+        print(f"debug: Benchmark completed in {self.duration_seconds:.2f}s with {self.total_messages} messages")
 
     def add_message(self, agent_name: str) -> None:
         """Track message from an agent."""
         self.total_messages += 1
         self.agent_participation[agent_name] = self.agent_participation.get(agent_name, 0) + 1
+        print(f"debug: Message recorded from {agent_name} (total: {self.total_messages})")
 
     def add_vote(self, agent_name: str, vote: str) -> None:
         """Track vote from an agent."""
@@ -57,14 +59,17 @@ class BenchmarkMetrics:
 
         # Update vote counts
         self.final_vote_counts[vote] = self.final_vote_counts.get(vote, 0) + 1
+        print(f"debug: Vote recorded from {agent_name}: {vote} (counts: {self.final_vote_counts})")
 
     def add_tokens(self, count: int) -> None:
         """Add to token usage count."""
         self.token_usage += count
+        print(f"debug: Added {count} tokens (total: {self.token_usage})")
 
     def add_api_call(self) -> None:
         """Increment API call counter."""
         self.api_calls += 1
+        print(f"debug: API call recorded (total: {self.api_calls})")
 
     def to_dict(self) -> dict[str, Any]:
         """Convert metrics to dictionary for serialization."""
@@ -154,6 +159,7 @@ class MetricsCollector:
         """Start collecting metrics for a new benchmark."""
         self.current_metrics = BenchmarkMetrics()
         self.active = True
+        print("debug: Started metrics collection")
         return self.current_metrics
 
     def stop_collection(self) -> BenchmarkMetrics | None:
@@ -161,6 +167,7 @@ class MetricsCollector:
         if self.current_metrics:
             self.current_metrics.complete_benchmark()
         self.active = False
+        print("debug: Stopped metrics collection")
         return self.current_metrics
 
     def record_message(self, agent_name: str, token_count: int = 0) -> None:
@@ -169,11 +176,15 @@ class MetricsCollector:
             self.current_metrics.add_message(agent_name)
             if token_count > 0:
                 self.current_metrics.add_tokens(token_count)
+        elif not self.active:
+            print(f"debug: Attempted to record message from {agent_name} but collection is inactive")
 
     def record_vote(self, agent_name: str, vote: str) -> None:
         """Record a vote cast by an agent."""
         if self.active and self.current_metrics:
             self.current_metrics.add_vote(agent_name, vote)
+        elif not self.active:
+            print(f"debug: Attempted to record vote from {agent_name} but collection is inactive")
 
     def record_api_call(self, token_count: int = 0) -> None:
         """Record an API call made during execution."""
@@ -181,3 +192,5 @@ class MetricsCollector:
             self.current_metrics.add_api_call()
             if token_count > 0:
                 self.current_metrics.add_tokens(token_count)
+        elif not self.active:
+            print("debug: Attempted to record API call but collection is inactive")

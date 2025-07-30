@@ -19,16 +19,20 @@ from benchmarks.scenarios import BenchmarkScenario, ScenarioType, get_scenario_b
 async def run_quick_test() -> bool:
     """Run a quick test to verify everything works."""
     print("=== Quick Benchmark Test ===")
+    print("debug: Starting quick test function")
 
     if not os.getenv("OPENAI_API_KEY"):
+        print("debug: OPENAI_API_KEY not found in environment")
         print("❌ OPENAI_API_KEY not set. Please set it to run benchmarks.")
         print("   export OPENAI_API_KEY='your-api-key'")
         return False
 
     try:
+        print("debug: Creating BenchmarkRunner with model gpt-4o-mini")
         runner = BenchmarkRunner(model_name="gpt-4o-mini")
 
         # Create a simple test scenario
+        print("debug: Creating test scenario for code review")
         test_scenario = BenchmarkScenario(
             name="quick_test",
             scenario_type=ScenarioType.CODE_REVIEW,
@@ -40,21 +44,26 @@ async def run_quick_test() -> bool:
                 {"name": "Reviewer3", "role": "Team lead making final decisions"},
             ],
         )
+        print(f"debug: Test scenario created: {test_scenario.name} ({test_scenario.scenario_type.value})")
 
         print("Running quick comparison...")
+        print("debug: Starting comparison with MAJORITY voting method")
         result = await runner.run_comparison(
             scenario=test_scenario, voting_method=VotingMethod.MAJORITY, save_results=True
         )
+        print("debug: Comparison completed successfully")
 
         print("✅ Quick test completed successfully!")
         print(f"   Voting approach: {result.voting_metrics.duration_seconds:.1f}s")
         print(f"   Standard approach: {result.standard_metrics.duration_seconds:.1f}s")
         print(f"   Voting messages: {result.voting_metrics.total_messages}")
         print(f"   Standard messages: {result.standard_metrics.total_messages}")
+        print(f"debug: Quick test results - voting success: {result.voting_metrics.success}, standard success: {result.standard_metrics.success}")
 
         return True
 
     except Exception as e:
+        print(f"debug: Exception occurred in quick test: {type(e).__name__}")
         print(f"❌ Quick test failed: {e}")
         return False
 
@@ -64,30 +73,41 @@ async def run_full_benchmarks(
 ) -> list[ComparisonResults]:
     """Run comprehensive benchmarks."""
     print("=== Full Benchmark Suite ===")
+    print(f"debug: Starting full benchmarks with scenario_types={scenario_types}, voting_methods={voting_methods}")
 
     if not os.getenv("OPENAI_API_KEY"):
+        print("debug: OPENAI_API_KEY not found in environment")
         print("❌ OPENAI_API_KEY not set. Please set it to run benchmarks.")
         return []
 
     if voting_methods is None:
         voting_methods = [VotingMethod.MAJORITY, VotingMethod.QUALIFIED_MAJORITY, VotingMethod.UNANIMOUS]
+        print("debug: Using default voting methods: MAJORITY, QUALIFIED_MAJORITY, UNANIMOUS")
 
+    print("debug: Creating BenchmarkRunner with model gpt-4o-mini")
     runner = BenchmarkRunner(model_name="gpt-4o-mini")
 
     all_results: list[ComparisonResults] = []
 
     # Run scenarios by type if specified, otherwise run all
     if scenario_types:
+        print(f"debug: Running specific scenario types: {[st.value for st in scenario_types]}")
         for scenario_type in scenario_types:
             print(f"\n--- Running {scenario_type.value} scenarios ---")
+            print(f"debug: Starting scenarios for {scenario_type.value}")
             results = await runner.run_all_scenarios(scenario_type=scenario_type, voting_methods=voting_methods)
+            print(f"debug: Completed {len(results)} scenarios for {scenario_type.value}")
             all_results.extend(results)
     else:
         print("--- Running all scenarios ---")
+        print("debug: Running all available scenarios")
         all_results = await runner.run_all_scenarios(voting_methods=voting_methods)
+        print(f"debug: Completed all scenarios, total results: {len(all_results)}")
 
     # Analyze and display results
+    print(f"debug: Analyzing {len(all_results)} results")
     analysis = runner.analyze_results(all_results)
+    print("debug: Analysis completed")
 
     print("\n=== Benchmark Results Summary ===")
     print(f"Total comparisons completed: {analysis['total_comparisons']}")
@@ -113,18 +133,25 @@ async def run_full_benchmarks(
 async def run_scalability_test() -> None:
     """Run scalability tests with different agent counts."""
     print("=== Scalability Test ===")
+    print("debug: Starting scalability test")
 
     # This would need the scalability example to be properly integrated
     print("Running scalability analysis...")
     print("Note: For detailed scalability testing, run: python examples/scalability_example.py")
 
     # Run a basic scalability comparison
+    print("debug: Creating BenchmarkRunner for scalability test")
     runner = BenchmarkRunner(model_name="gpt-4o-mini")
 
+    print("debug: Getting bug_detection_security scenario")
     scenario = get_scenario_by_name("bug_detection_security")
     if scenario:
+        print("debug: Running scalability comparison with MAJORITY voting")
         result = await runner.run_comparison(scenario, VotingMethod.MAJORITY)
         print(f"3-agent scenario: {result.voting_metrics.duration_seconds:.1f}s")
+        print(f"debug: Scalability test completed in {result.voting_metrics.duration_seconds:.1f}s")
+    else:
+        print("debug: bug_detection_security scenario not found")
 
     print("For comprehensive scalability testing with 5, 7, 10+ agents,")
     print("modify scenarios to support variable agent counts.")
@@ -166,6 +193,7 @@ Examples:
 
     # If no specific arguments, show help
     if not any(vars(args).values()):
+        print("debug: No arguments provided, showing help")
         parser.print_help()
         return
 
@@ -177,6 +205,7 @@ Examples:
         scenario_types.append(ScenarioType.ARCHITECTURE_DECISION)
     if args.moderation:
         scenario_types.append(ScenarioType.CONTENT_MODERATION)
+    print(f"debug: Selected scenario types: {[st.value for st in scenario_types] if scenario_types else 'all'}")
 
     # Determine voting methods
     voting_methods: list[VotingMethod] = []
@@ -190,14 +219,18 @@ Examples:
     # Default to all methods if none specified
     if not voting_methods and not args.quick:
         voting_methods = [VotingMethod.MAJORITY, VotingMethod.QUALIFIED_MAJORITY, VotingMethod.UNANIMOUS]
+    print(f"debug: Selected voting methods: {[vm.value for vm in voting_methods] if voting_methods else 'none (quick test)'}")
 
     # Run requested benchmarks
     if args.quick:
+        print("debug: Running quick test")
         success = asyncio.run(run_quick_test())
         if not success:
+            print("debug: Quick test failed, exiting with code 1")
             sys.exit(1)
 
     if args.full or any([args.code_review, args.architecture, args.moderation]):
+        print("debug: Running full benchmarks")
         asyncio.run(
             run_full_benchmarks(
                 scenario_types=scenario_types if scenario_types else None, voting_methods=voting_methods
@@ -205,6 +238,7 @@ Examples:
         )
 
     if args.scalability:
+        print("debug: Running scalability test")
         asyncio.run(run_scalability_test())
 
 
