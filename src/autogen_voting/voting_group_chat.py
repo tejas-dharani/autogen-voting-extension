@@ -27,6 +27,9 @@ from typing_extensions import Self
 
 TRACE_LOGGER_NAME = "autogen_agentchat.trace"
 
+# Set up logging for this module
+logger = logging.getLogger(__name__)
+
 
 class VotingMethod(str, Enum):
     """Supported voting methods for consensus building."""
@@ -432,7 +435,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
 
         # Metrics collection
         self._metrics_collector: Any = metrics_collector
-        print(f"🔧 DEBUG: MANAGER_INIT - Metrics collector: {type(metrics_collector) if metrics_collector else 'None'}")
+        logger.debug(f"MANAGER_INIT - Metrics collector: {type(metrics_collector) if metrics_collector else 'None'}")
 
         # Register custom message types (check if already registered)
         try:
@@ -581,17 +584,17 @@ class VotingGroupChatManager(BaseGroupChatManager):
     async def select_speaker(self, thread: Sequence[BaseAgentEvent | BaseChatMessage]) -> list[str] | str:
         """Select speakers based on current voting phase and state with comprehensive error handling."""
         try:
-            print(f"🔧 DEBUG: SELECT_SPEAKER - Phase: {self._current_phase.value}, Thread: {len(thread)} messages")
+            logger.debug(f"SELECT_SPEAKER - Phase: {self._current_phase.value}, Thread: {len(thread)} messages")
 
             if not thread:
                 # Initial state - select proposer
                 proposer = self._select_proposer()
-                print(f"🔧 DEBUG: SELECT_SPEAKER - No thread, selected proposer: {proposer}")
+                logger.debug(f"SELECT_SPEAKER - No thread, selected proposer: {proposer}")
                 return proposer
 
             last_message = thread[-1]
             message_source = getattr(last_message, "source", "unknown")
-            print(f"🔧 DEBUG: SELECT_SPEAKER - Last message: {type(last_message).__name__} from {message_source}")
+            logger.debug(f"SELECT_SPEAKER - Last message: {type(last_message).__name__} from {message_source}")
 
             # Validate message source
             if message_source != "user" and not self.authenticate_agent(message_source):
@@ -602,46 +605,46 @@ class VotingGroupChatManager(BaseGroupChatManager):
             # Track message for metrics (if not from user)
             if self._metrics_collector and message_source != "user":
                 try:
-                    print(f"🔧 DEBUG: SELECT_SPEAKER - Recording message from {message_source}")
+                    logger.debug(f"SELECT_SPEAKER - Recording message from {message_source}")
                     # Estimate tokens (rough approximation: 1 token ≈ 4 characters)
                     message_content = getattr(last_message, "content", "")
                     estimated_tokens = len(str(message_content)) // 4
                     self._metrics_collector.record_message(message_source, estimated_tokens)
                     # Record API call (each agent message likely represents an API call)
                     self._metrics_collector.record_api_call(estimated_tokens)
-                    print(f"🔧 DEBUG: SELECT_SPEAKER - Estimated {estimated_tokens} tokens, recorded API call")
+                    logger.debug(f"SELECT_SPEAKER - Estimated {estimated_tokens} tokens, recorded API call")
                 except Exception as e:
-                    print(f"🔧 DEBUG: SELECT_SPEAKER - Metrics recording failed: {e}")
+                    logger.debug(f"SELECT_SPEAKER - Metrics recording failed: {e}")
 
             # Handle different voting phases with error recovery
             try:
                 if self._current_phase == VotingPhase.PROPOSAL:
                     result = await self._handle_proposal_phase(last_message)
-                    print(f"🔧 DEBUG: SELECT_SPEAKER - Proposal phase result: {result}")
+                    logger.debug(f"SELECT_SPEAKER - Proposal phase result: {result}")
                     return result
                 elif self._current_phase == VotingPhase.VOTING:
                     result = await self._handle_voting_phase(last_message)
-                    print(f"🔧 DEBUG: SELECT_SPEAKER - Voting phase result: {result}")
+                    logger.debug(f"SELECT_SPEAKER - Voting phase result: {result}")
                     return result
                 elif self._current_phase == VotingPhase.DISCUSSION:
                     result = await self._handle_discussion_phase(last_message)
-                    print(f"🔧 DEBUG: SELECT_SPEAKER - Discussion phase result: {result}")
+                    logger.debug(f"SELECT_SPEAKER - Discussion phase result: {result}")
                     return result
                 else:  # VotingPhase.CONSENSUS
                     result = await self._handle_consensus_phase(last_message)
-                    print(f"🔧 DEBUG: SELECT_SPEAKER - Consensus phase result: {result}")
+                    logger.debug(f"SELECT_SPEAKER - Consensus phase result: {result}")
                     return result
             except Exception as phase_error:
                 self._audit_logger.log_security_violation(
                     "PHASE_HANDLING_ERROR", f"phase={self._current_phase.value}, error={str(phase_error)}"
                 )
-                print(f"🔧 ERROR: SELECT_SPEAKER - Phase handling failed: {phase_error}")
+                logger.error(f"SELECT_SPEAKER - Phase handling failed: {phase_error}")
                 return self._get_fallback_speakers()
 
         except Exception as e:
             # Critical error recovery
             self._audit_logger.log_security_violation("CRITICAL_SELECT_SPEAKER_ERROR", str(e))
-            print(f"🔧 CRITICAL_ERROR: SELECT_SPEAKER - {e}")
+            logger.critical(f"SELECT_SPEAKER - {e}")
             return self._get_fallback_speakers()
 
     def _get_fallback_speakers(self) -> list[str]:
@@ -669,20 +672,20 @@ class VotingGroupChatManager(BaseGroupChatManager):
 
     async def _handle_proposal_phase(self, last_message: BaseAgentEvent | BaseChatMessage) -> list[str]:
         """Handle speaker selection during proposal phase."""
-        print(
-            f"🔧 DEBUG: PROPOSAL_PHASE - Message type: {type(last_message).__name__}, source: {getattr(last_message, 'source', 'unknown')}"
+        logger.debug(
+            f"PROPOSAL_PHASE - Message type: {type(last_message).__name__}, source: {getattr(last_message, 'source', 'unknown')}"
         )
 
         if isinstance(last_message, ProposalMessage):
-            print("🔧 DEBUG: PROPOSAL_PHASE - Received ProposalMessage, validating integrity")
+            logger.debug("PROPOSAL_PHASE - Received ProposalMessage, validating integrity")
 
             # Validate proposal integrity and authenticity
             if not self.validate_proposal_integrity(last_message):
-                print("🔧 DEBUG: PROPOSAL_PHASE - Proposal validation failed")
+                logger.debug("PROPOSAL_PHASE - Proposal validation failed")
                 self._audit_logger.log_security_violation("INVALID_PROPOSAL", f"proposer={last_message.source}")
                 return [self._select_proposer()]  # Request new proposal
 
-            print("🔧 DEBUG: PROPOSAL_PHASE - Proposal validated, transitioning to voting")
+            logger.debug("PROPOSAL_PHASE - Proposal validated, transitioning to voting")
 
             # Proposal received, transition to voting
             self._current_proposal = {
@@ -692,7 +695,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
                 "options": last_message.content.options,
             }
             self._current_phase = VotingPhase.VOTING
-            print(f"🔧 DEBUG: PROPOSAL_PHASE - Set proposal: {self._current_proposal['title']}")
+            logger.debug(f"PROPOSAL_PHASE - Set proposal: {self._current_proposal['title']}")
 
             # Log proposal creation
             self._audit_logger.log_proposal_created(
@@ -703,12 +706,12 @@ class VotingGroupChatManager(BaseGroupChatManager):
             await self._announce_voting_phase()
 
             # Return all eligible voters
-            print(f"🔧 DEBUG: PROPOSAL_PHASE - Returning eligible voters: {self._eligible_voters}")
+            logger.debug(f"PROPOSAL_PHASE - Returning eligible voters: {self._eligible_voters}")
             return self._eligible_voters
 
         # Accept TextMessage as proposal and auto-convert
         elif isinstance(last_message, TextMessage) and last_message.source != "user":
-            print("🔧 DEBUG: PROPOSAL_PHASE - Converting TextMessage to proposal")
+            logger.debug("PROPOSAL_PHASE - Converting TextMessage to proposal")
             # Auto-convert TextMessage to proposal
             self._current_proposal = {
                 "id": f"proposal_{len(self._message_thread)}",
@@ -717,38 +720,38 @@ class VotingGroupChatManager(BaseGroupChatManager):
                 "options": ["APPROVE", "REJECT"],
             }
             self._current_phase = VotingPhase.VOTING
-            print(f"🔧 DEBUG: PROPOSAL_PHASE - Created proposal ID: {self._current_proposal['id']}")
+            logger.debug(f"PROPOSAL_PHASE - Created proposal ID: {self._current_proposal['id']}")
 
             # Announce voting phase
             await self._announce_voting_phase()
 
             # Return all eligible voters
-            print(f"🔧 DEBUG: PROPOSAL_PHASE - Returning eligible voters: {self._eligible_voters}")
+            logger.debug(f"PROPOSAL_PHASE - Returning eligible voters: {self._eligible_voters}")
             return self._eligible_voters
 
         # Still waiting for proposal
         proposer = self._select_proposer()
-        print(f"🔧 DEBUG: PROPOSAL_PHASE - Still waiting, selecting proposer: {proposer}")
+        logger.debug(f"PROPOSAL_PHASE - Still waiting, selecting proposer: {proposer}")
         return [proposer]
 
     async def _handle_voting_phase(self, last_message: BaseAgentEvent | BaseChatMessage) -> list[str]:
         """Handle speaker selection during voting phase."""
-        print(
-            f"🔧 DEBUG: VOTING_PHASE - Message type: {type(last_message).__name__}, source: {getattr(last_message, 'source', 'unknown')}"
+        logger.debug(
+            f"VOTING_PHASE - Message type: {type(last_message).__name__}, source: {getattr(last_message, 'source', 'unknown')}"
         )
 
         if isinstance(last_message, VoteMessage):
             # Validate vote integrity and authenticity
             voter_name = last_message.source
-            print(f"🔧 DEBUG: VOTING_PHASE - Received VoteMessage from {voter_name}, validating integrity")
+            logger.debug(f"VOTING_PHASE - Received VoteMessage from {voter_name}, validating integrity")
 
             if not self.validate_vote_integrity(last_message):
-                print(f"🔧 DEBUG: VOTING_PHASE - Vote validation failed for {voter_name}")
+                logger.debug(f"VOTING_PHASE - Vote validation failed for {voter_name}")
                 # Continue without recording invalid vote
                 remaining_voters = [name for name in self._eligible_voters if name not in self._votes_cast]
                 return remaining_voters if remaining_voters else []
 
-            print(f"🔧 DEBUG: VOTING_PHASE - Vote validated for {voter_name}")
+            logger.debug(f"VOTING_PHASE - Vote validated for {voter_name}")
 
             # Record the vote
             if voter_name in self._eligible_voters:
@@ -762,7 +765,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
                 }
 
                 trace_logger.debug(f"Vote recorded from {voter_name}: {last_message.content.vote}")
-                print(f"🔧 DEBUG: VOTING_PHASE - Recorded vote: {voter_name} -> {last_message.content.vote}")
+                logger.debug(f"VOTING_PHASE - Recorded vote: {voter_name} -> {last_message.content.vote}")
 
                 # Log vote casting
                 self._audit_logger.log_vote_cast(
@@ -779,7 +782,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
                         if hasattr(last_message.content.vote, "value")
                         else str(last_message.content.vote)
                     )
-                    print(f"🔧 DEBUG: VOTING_PHASE - Recording VoteMessage in metrics: {voter_name} -> {vote_value}")
+                    logger.debug(f"VOTING_PHASE - Recording VoteMessage in metrics: {voter_name} -> {vote_value}")
                     self._metrics_collector.record_vote(voter_name, vote_value)
 
                     # Track abstentions and reasoning
@@ -792,7 +795,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
         # Accept TextMessage as vote and auto-convert
         elif isinstance(last_message, TextMessage) and last_message.source in self._eligible_voters:
             voter_name = last_message.source
-            print(f"🔧 DEBUG: VOTING_PHASE - Processing TextMessage from voter {voter_name}")
+            logger.debug(f"VOTING_PHASE - Processing TextMessage from voter {voter_name}")
 
             # Parse vote from text content
             content = last_message.content.lower()
@@ -806,7 +809,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
             elif any(word in content for word in ["abstain", "neutral", "pass"]):
                 vote_type = VoteType.ABSTAIN
 
-            print(f"🔧 DEBUG: VOTING_PHASE - Parsed vote type: {vote_type}")
+            logger.debug(f"VOTING_PHASE - Parsed vote type: {vote_type}")
             if vote_type and voter_name not in self._votes_cast:
                 self._votes_cast[voter_name] = {
                     "vote": vote_type,
@@ -814,11 +817,11 @@ class VotingGroupChatManager(BaseGroupChatManager):
                     "confidence": 1.0,
                     "ranked_choices": None,
                 }
-                print(f"🔧 DEBUG: VOTING_PHASE - Recorded parsed vote: {voter_name} -> {vote_type.value}")
+                logger.debug(f"VOTING_PHASE - Recorded parsed vote: {voter_name} -> {vote_type.value}")
 
                 # Track vote for metrics
                 if self._metrics_collector:
-                    print(f"🔧 DEBUG: VOTING_PHASE - Recording vote in metrics: {voter_name} -> {vote_type.value}")
+                    logger.debug(f"VOTING_PHASE - Recording vote in metrics: {voter_name} -> {vote_type.value}")
                     self._metrics_collector.record_vote(voter_name, vote_type.value)
 
                     # Track abstentions and reasoning
@@ -828,23 +831,23 @@ class VotingGroupChatManager(BaseGroupChatManager):
                         self._metrics_collector.current_metrics.reasoning_provided = True
 
             elif voter_name in self._votes_cast:
-                print(f"🔧 DEBUG: VOTING_PHASE - {voter_name} already voted")
+                logger.debug(f"VOTING_PHASE - {voter_name} already voted")
             else:
-                print(f"🔧 DEBUG: VOTING_PHASE - Could not parse vote from {voter_name}")
+                logger.debug(f"VOTING_PHASE - Could not parse vote from {voter_name}")
 
         # Check if voting is complete
         votes_cast_count = len(self._votes_cast)
         eligible_count = len(self._eligible_voters)
-        print(f"🔧 DEBUG: VOTING_PHASE - Vote progress: {votes_cast_count}/{eligible_count}")
-        print(f"🔧 DEBUG: VOTING_PHASE - Votes cast: {list(self._votes_cast.keys())}")
+        logger.debug(f"VOTING_PHASE - Vote progress: {votes_cast_count}/{eligible_count}")
+        logger.debug(f"VOTING_PHASE - Votes cast: {list(self._votes_cast.keys())}")
 
         if self._is_voting_complete():
-            print("🔧 DEBUG: VOTING_PHASE - Voting complete, processing results")
+            logger.debug("VOTING_PHASE - Voting complete, processing results")
             return await self._process_voting_results()
 
         # Return voters who haven't voted yet
         remaining_voters = [name for name in self._eligible_voters if name not in self._votes_cast]
-        print(f"🔧 DEBUG: VOTING_PHASE - Remaining voters: {remaining_voters}")
+        logger.debug(f"VOTING_PHASE - Remaining voters: {remaining_voters}")
         return remaining_voters if remaining_voters else []
 
     async def _handle_discussion_phase(self, last_message: BaseAgentEvent | BaseChatMessage) -> list[str]:
@@ -874,42 +877,42 @@ class VotingGroupChatManager(BaseGroupChatManager):
 
     async def _process_voting_results(self) -> list[str]:
         """Process voting results and determine outcome."""
-        print(f"🔧 DEBUG: PROCESS_RESULTS - Processing {len(self._votes_cast)} votes")
+        logger.debug(f"PROCESS_RESULTS - Processing {len(self._votes_cast)} votes")
 
         if not self._votes_cast:
-            print("🔧 DEBUG: PROCESS_RESULTS - No votes cast, returning empty")
+            logger.debug("PROCESS_RESULTS - No votes cast, returning empty")
             return []
 
         # Calculate results based on voting method
         result = self._calculate_voting_result()
-        print(f"🔧 DEBUG: PROCESS_RESULTS - Calculated result: {result['result']}")
-        print(f"🔧 DEBUG: PROCESS_RESULTS - Vote summary: {result['votes_summary']}")
+        logger.debug(f"PROCESS_RESULTS - Calculated result: {result['result']}")
+        logger.debug(f"PROCESS_RESULTS - Vote summary: {result['votes_summary']}")
 
         # Create and send result message
         result_message = VotingResultMessage(content=VotingResult(**result), source=self._name)
-        print("🔧 DEBUG: PROCESS_RESULTS - Created result message")
+        logger.debug("PROCESS_RESULTS - Created result message")
 
         # Log voting result
         self._audit_logger.log_voting_result(result["proposal_id"], result["result"], result["participation_rate"])
 
         await self.update_message_thread([result_message])
-        print("🔧 DEBUG: PROCESS_RESULTS - Updated message thread")
+        logger.debug("PROCESS_RESULTS - Updated message thread")
 
         # Determine next phase
         if result["result"] == "no_consensus" and self._discussion_rounds < self._max_discussion_rounds:
             self._current_phase = VotingPhase.DISCUSSION
             self._discussion_rounds += 1
-            print(f"🔧 DEBUG: PROCESS_RESULTS - Moving to discussion phase, round {self._discussion_rounds}")
+            logger.debug(f"PROCESS_RESULTS - Moving to discussion phase, round {self._discussion_rounds}")
 
             # Track discussion rounds in metrics
             if self._metrics_collector:
                 self._metrics_collector.current_metrics.discussion_rounds = self._discussion_rounds
-                print(f"🔧 DEBUG: PROCESS_RESULTS - Updated metrics discussion rounds: {self._discussion_rounds}")
+                logger.debug(f"PROCESS_RESULTS - Updated metrics discussion rounds: {self._discussion_rounds}")
 
             return self._participant_names  # Open discussion
         else:
             self._current_phase = VotingPhase.CONSENSUS
-            print("🔧 DEBUG: PROCESS_RESULTS - Moving to consensus phase, voting complete")
+            logger.debug("PROCESS_RESULTS - Moving to consensus phase, voting complete")
             return []  # End voting process
 
     def _calculate_voting_result(self) -> dict[str, Any]:
@@ -1269,7 +1272,9 @@ class VotingGroupChat(BaseGroupChat, Component[VotingGroupChatConfig]):
 
                 # Create reviewers with different expertise
                 senior_dev = AssistantAgent(
-                    "SeniorDev", model_client, system_message="Senior developer focused on architecture and best practices."
+                    "SeniorDev",
+                    model_client,
+                    system_message="Senior developer focused on architecture and best practices.",
                 )
                 security_expert = AssistantAgent(
                     "SecurityExpert", model_client, system_message="Security specialist reviewing for vulnerabilities."
@@ -1318,10 +1323,14 @@ class VotingGroupChat(BaseGroupChat, Component[VotingGroupChatConfig]):
                     "TechLead", model_client, system_message="Technical lead with expertise in distributed systems."
                 )
                 solution_architect = AssistantAgent(
-                    "SolutionArchitect", model_client, system_message="Solution architect focused on enterprise patterns."
+                    "SolutionArchitect",
+                    model_client,
+                    system_message="Solution architect focused on enterprise patterns.",
                 )
                 devops_engineer = AssistantAgent(
-                    "DevOpsEngineer", model_client, system_message="DevOps engineer focused on deployment and operations."
+                    "DevOpsEngineer",
+                    model_client,
+                    system_message="DevOps engineer focused on deployment and operations.",
                 )
 
                 # Create voting team requiring unanimous consensus
@@ -1357,10 +1366,14 @@ class VotingGroupChat(BaseGroupChat, Component[VotingGroupChatConfig]):
 
                 # Create moderation team
                 community_manager = AssistantAgent(
-                    "CommunityManager", model_client, system_message="Community manager maintaining positive environment."
+                    "CommunityManager",
+                    model_client,
+                    system_message="Community manager maintaining positive environment.",
                 )
                 safety_specialist = AssistantAgent(
-                    "SafetySpecialist", model_client, system_message="Safety specialist focused on harmful content detection."
+                    "SafetySpecialist",
+                    model_client,
+                    system_message="Safety specialist focused on harmful content detection.",
                 )
                 legal_advisor = AssistantAgent(
                     "LegalAdvisor", model_client, system_message="Legal advisor focused on compliance and risk."
@@ -1450,7 +1463,7 @@ class VotingGroupChat(BaseGroupChat, Component[VotingGroupChatConfig]):
     def set_metrics_collector(self, metrics_collector: Any) -> None:
         """Set the metrics collector for tracking performance data."""
         self._metrics_collector = metrics_collector
-        print(f"🔧 DEBUG: VOTING_CHAT - Set metrics collector: {type(metrics_collector)}")
+        logger.debug(f"VOTING_CHAT - Set metrics collector: {type(metrics_collector)}")
 
     def _create_group_chat_manager_factory(
         self,
