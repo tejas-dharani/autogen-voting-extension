@@ -20,14 +20,14 @@ async def run_validation_test() -> bool:
     """Run quick validation tests for all scenario types."""
     print("=== System Validation Test ===")
     print("Testing all scenario types with simple prompts...")
-    
+
     if not os.getenv("OPENAI_API_KEY"):
         print("❌ OPENAI_API_KEY not set. Please set it to run benchmarks.")
         return False
 
     try:
         runner = BenchmarkRunner(model_name="gpt-4o-mini", rate_limit_delay=0.5, max_retries=3)
-        
+
         # Quick scenarios for each type
         test_scenarios = [
             BenchmarkScenario(
@@ -64,39 +64,43 @@ async def run_validation_test() -> bool:
                 ],
             ),
         ]
-        
+
         print(f"Running {len(test_scenarios)} validation tests...")
         all_passed = True
-        
+
         for i, scenario in enumerate(test_scenarios, 1):
             print(f"\n[{i}/{len(test_scenarios)}] Testing {scenario.scenario_type.value}...")
             try:
                 result = await runner.run_comparison(scenario, VotingMethod.MAJORITY, save_results=False)
                 voting_ok = result.voting_metrics.decision_reached
                 standard_ok = result.standard_metrics.decision_reached
-                
+
                 if voting_ok and standard_ok:
                     print(f"   ✅ {scenario.scenario_type.value}: PASSED")
-                    print(f"      Voting: {result.voting_metrics.duration_seconds:.1f}s, {result.voting_metrics.total_messages} msgs")
-                    print(f"      Standard: {result.standard_metrics.duration_seconds:.1f}s, {result.standard_metrics.total_messages} msgs")
+                    print(
+                        f"      Voting: {result.voting_metrics.duration_seconds:.1f}s, {result.voting_metrics.total_messages} msgs"
+                    )
+                    print(
+                        f"      Standard: {result.standard_metrics.duration_seconds:.1f}s, {result.standard_metrics.total_messages} msgs"
+                    )
                 else:
                     print(f"   ❌ {scenario.scenario_type.value}: FAILED")
                     print(f"      Voting decision: {voting_ok}, Standard decision: {standard_ok}")
                     all_passed = False
-                    
+
             except Exception as e:
                 print(f"   ❌ {scenario.scenario_type.value}: ERROR - {e}")
                 all_passed = False
-        
+
         if all_passed:
-            print(f"\n🎉 System Validation: ALL TESTS PASSED!")
+            print("\n🎉 System Validation: ALL TESTS PASSED!")
             print("Your voting extension is working correctly across all scenario types.")
         else:
-            print(f"\n⚠️  System Validation: SOME TESTS FAILED")
+            print("\n⚠️  System Validation: SOME TESTS FAILED")
             print("Check the errors above to diagnose issues.")
-            
+
         return all_passed
-        
+
     except Exception as e:
         print(f"❌ Validation failed: {e}")
         return False
@@ -144,7 +148,9 @@ async def run_quick_test() -> bool:
         print(f"   Standard approach: {result.standard_metrics.duration_seconds:.1f}s")
         print(f"   Voting messages: {result.voting_metrics.total_messages}")
         print(f"   Standard messages: {result.standard_metrics.total_messages}")
-        print(f"debug: Quick test results - voting decision: {result.voting_metrics.decision_reached}, standard decision: {result.standard_metrics.decision_reached}")
+        print(
+            f"debug: Quick test results - voting decision: {result.voting_metrics.decision_reached}, standard decision: {result.standard_metrics.decision_reached}"
+        )
 
         return True
 
@@ -307,7 +313,9 @@ Examples:
     # Default to all methods if none specified
     if not voting_methods and not args.quick:
         voting_methods = [VotingMethod.MAJORITY, VotingMethod.QUALIFIED_MAJORITY, VotingMethod.UNANIMOUS]
-    print(f"debug: Selected voting methods: {[vm.value for vm in voting_methods] if voting_methods else 'none (quick test)'}")
+    print(
+        f"debug: Selected voting methods: {[vm.value for vm in voting_methods] if voting_methods else 'none (quick test)'}"
+    )
 
     # Run requested benchmarks
     if args.quick:

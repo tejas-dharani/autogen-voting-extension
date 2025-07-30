@@ -3,7 +3,6 @@
 import asyncio
 import json
 import random
-import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
@@ -23,11 +22,13 @@ from .scenarios import BenchmarkScenario, ScenarioType, get_all_scenarios
 class BenchmarkRunner:
     """Runs comparative benchmarks between voting and standard group chats."""
 
-    def __init__(self, 
-                 model_name: str = "gpt-4o-mini", 
-                 results_dir: str = "benchmark_results",
-                 rate_limit_delay: float = 1.0,
-                 max_retries: int = 3):
+    def __init__(
+        self,
+        model_name: str = "gpt-4o-mini",
+        results_dir: str = "benchmark_results",
+        rate_limit_delay: float = 1.0,
+        max_retries: int = 3,
+    ):
         self.model_name = model_name
         self.results_dir = Path(results_dir)
         self.results_dir.mkdir(exist_ok=True)
@@ -50,7 +51,7 @@ class BenchmarkRunner:
                 if attempt == max_retries:
                     print(f"❌ Rate limit exceeded after {max_retries} retries: {e}")
                     raise
-                
+
                 # Extract wait time from error message if available
                 error_msg = str(e)
                 wait_time = 30  # Default wait time
@@ -58,16 +59,17 @@ class BenchmarkRunner:
                     try:
                         # Try to extract the wait time from error message
                         import re
-                        match = re.search(r'try again in (\d+\.?\d*)', error_msg)
+
+                        match = re.search(r"try again in (\d+\.?\d*)", error_msg)
                         if match:
                             wait_time = float(match.group(1))
                     except (ValueError, AttributeError):
                         pass
-                
+
                 # Add exponential backoff with jitter
-                backoff_delay = (2 ** attempt) * self.rate_limit_delay
+                backoff_delay = (2**attempt) * self.rate_limit_delay
                 total_delay = max(wait_time, backoff_delay) + random.uniform(0, 2)
-                
+
                 print(f"🔄 Rate limit hit (attempt {attempt + 1}/{max_retries + 1})")
                 print(f"   Waiting {total_delay:.1f}s before retry...")
                 await asyncio.sleep(total_delay)
@@ -130,9 +132,7 @@ class BenchmarkRunner:
             # Run the scenario with rate limiting
             print(f"debug: Task prompt: {scenario.task_prompt[:200]}...")
             print("debug: Running voting team...")
-            result = await self._handle_rate_limit_with_retry(
-                lambda: voting_team.run(task=scenario.task_prompt)
-            )
+            result = await self._handle_rate_limit_with_retry(lambda: voting_team.run(task=scenario.task_prompt))
             print(f"debug: Scenario completed with result type: {type(result)}")
             print(f"debug: Result attributes: {[attr for attr in dir(result) if not attr.startswith('_')]}")
 
@@ -248,9 +248,7 @@ class BenchmarkRunner:
         try:
             # Run the scenario with rate limiting
             print("debug: Running standard team...")
-            result = await self._handle_rate_limit_with_retry(
-                lambda: standard_team.run(task=scenario.task_prompt)
-            )
+            result = await self._handle_rate_limit_with_retry(lambda: standard_team.run(task=scenario.task_prompt))
             print("debug: Standard scenario completed")
 
             # Extract messages and estimate metrics from result
@@ -343,13 +341,13 @@ class BenchmarkRunner:
                 try:
                     result = await self.run_comparison(scenario, voting_method)
                     all_results.append(result)
-                    
+
                     # Add delay between scenarios to avoid rate limits
                     if len(all_results) % 2 == 0:  # Every 2 comparisons
                         delay = self.rate_limit_delay * 2
                         print(f"🔄 Adding {delay}s delay to prevent rate limits...")
                         await asyncio.sleep(delay)
-                        
+
                 except Exception as e:
                     print(f"Error running scenario {scenario.name} with {voting_method.value}: {e}")
                     # Add delay even on errors to prevent cascading rate limits
