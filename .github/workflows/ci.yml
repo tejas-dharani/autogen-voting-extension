@@ -18,7 +18,7 @@ jobs:
       - uses: astral-sh/setup-uv@v3
       - name: Install dependencies
         run: |
-          uv sync --group dev
+          uv sync --extra dev
           source .venv/bin/activate
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
@@ -40,7 +40,7 @@ jobs:
       - uses: astral-sh/setup-uv@v3
       - name: Install dependencies
         run: |
-          uv sync --group dev
+          uv sync --extra dev
           source .venv/bin/activate
           echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
