@@ -18,12 +18,12 @@ jobs:
       - uses: astral-sh/setup-uv@v3
       - name: Install dependencies
         run: |
-          uv venv
-          uv pip install -e ".[dev]"
-      - name: Run poe check
-        run: |
+          uv sync --group dev
           source .venv/bin/activate
-          poe check
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+      - name: Run poe check
+        run: poe check
 
   test:
     name: Test Python ${{ matrix.python-version }}
@@ -40,9 +40,9 @@ jobs:
       - uses: astral-sh/setup-uv@v3
       - name: Install dependencies
         run: |
-          uv venv
-          uv pip install -e ".[dev]"
-      - name: Run tests
-        run: |
+          uv sync --group dev
           source .venv/bin/activate
-          pytest tests/
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+      - name: Run tests
+        run: pytest tests/
