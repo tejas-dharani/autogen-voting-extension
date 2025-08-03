@@ -1,7 +1,6 @@
 # AutoGen Voting Extension 🗳️
 
-[![PyPI version](https://badge.fury.io/py/autogen-voting-extension.svg)](https://badge.fury.io/py/autogen-voting-extension)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A powerful extension for Microsoft AutoGen that enables **democratic consensus** in multi-agent systems through configurable voting mechanisms. Perfect for code reviews, architecture decisions, content moderation, and any scenario requiring transparent group decision-making.

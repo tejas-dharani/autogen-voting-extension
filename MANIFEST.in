@@ -3,26 +3,21 @@ include LICENSE
 include README.md
 include CHANGELOG.md
 include pyproject.toml
-include requirements.txt
 
 # Include package marker for typing
-include autogen_voting/py.typed
+include src/autogen_voting/py.typed
 
 # Include documentation
 recursive-include docs *.md *.rst *.txt *.py
 recursive-include docs *.png *.jpg *.gif *.svg
 
-# Include examples
+# Include examples (useful for users)
 recursive-include examples *.py *.md *.txt *.json
 
-# Include tests (for source distributions)
+# Include tests (for source distributions only)
 recursive-include tests *.py *.json *.yaml *.yml
 
-# Include configuration files
-include .pre-commit-config.yaml
-include tox.ini
-
-# Exclude development and CI files from source distribution
+# Exclude development and build artifacts
 exclude .gitignore
 exclude .github
 recursive-exclude .github *
@@ -31,10 +26,20 @@ recursive-exclude .venv *
 exclude htmlcov
 recursive-exclude htmlcov *
 exclude .coverage
+exclude coverage.xml
 exclude .pytest_cache
 recursive-exclude .pytest_cache *
 exclude .mypy_cache
 recursive-exclude .mypy_cache *
+exclude .ruff_cache
+recursive-exclude .ruff_cache *
+
+# Exclude benchmark files (not needed in distribution)
+exclude run_benchmarks.py
+exclude benchmarks
+recursive-exclude benchmarks *
+exclude benchmark_results
+recursive-exclude benchmark_results *
 
 # Exclude compiled Python files
 global-exclude *.pyc
