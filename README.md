@@ -1,7 +1,9 @@
 # AutoGen Voting Extension 🗳️
 
+[![PyPI version](https://badge.fury.io/py/autogen-voting-extension.svg)](https://badge.fury.io/py/autogen-voting-extension)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Downloads](https://pepy.tech/badge/autogen-voting-extension)](https://pepy.tech/project/autogen-voting-extension)
 
 A powerful extension for Microsoft AutoGen that enables **democratic consensus** in multi-agent systems through configurable voting mechanisms. Perfect for code reviews, architecture decisions, content moderation, and any scenario requiring transparent group decision-making.
 
@@ -36,23 +38,20 @@ A powerful extension for Microsoft AutoGen that enables **democratic consensus**
 ## 🚀 Installation
 
 ```bash
-# Install AutoGen dependencies
-pip install autogen-agentchat autogen-ext[openai]
-
-# Install the voting extension
+# Install the voting extension (includes AutoGen dependencies)
 pip install autogen-voting-extension
 ```
 
-For development and benchmarking:
+For development with additional tools:
 
 ```bash
 pip install autogen-voting-extension[dev]
 ```
 
-For development:
+For development from source:
 
 ```bash
-git clone https://github.com/your-username/autogen-voting-extension.git
+git clone https://github.com/tejas-dharani/autogen-voting-extension.git
 cd autogen-voting-extension
 pip install -e ".[dev]"
 ```
@@ -327,8 +326,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- **GitHub Repository**: [autogen-voting-extension](https://github.com/tejas-dharani/autogen-voting-extension)
 - **PyPI Package**: [autogen-voting-extension](https://pypi.org/project/autogen-voting-extension/)
+- **GitHub Repository**: [autogen-voting-extension](https://github.com/tejas-dharani/autogen-voting-extension)
 - **AutoGen Documentation**: [Microsoft AutoGen](https://microsoft.github.io/autogen/)
 - **Issues & Support**: [GitHub Issues](https://github.com/tejas-dharani/autogen-voting-extension/issues)
 

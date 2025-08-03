@@ -7,7 +7,6 @@ name = "autogen-voting-extension"
 version = "0.1.0"
 description = "Voting extension for AutoGen"
 readme = "README.md"
-long_description_content_type = "text/markdown"
 requires-python = ">=3.10"
 authors = [
     {name = "Tejas Dharani", email = "tejas.dharani10@gmail.com"}
@@ -185,4 +184,10 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "if TYPE_CHECKING:",
+]
+
+[dependency-groups]
+dev = [
+    "build>=1.3.0",
+    "twine>=6.1.0",
 ]
