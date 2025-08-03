@@ -507,6 +507,28 @@ class VotingGroupChatManager(BaseGroupChatManager):
         """Get the list of eligible voters."""
         return self._eligible_voters.copy()  # Return a copy to prevent external modification
 
+    # Test-specific accessors for Byzantine fault testing
+    @property
+    def byzantine_detector(self) -> ByzantineFaultDetector:
+        """Get the Byzantine fault detector for testing."""
+        return self._byzantine_detector
+
+    def set_current_proposal_for_testing(self, proposal: dict[str, Any] | None) -> None:
+        """Set current proposal for testing purposes."""
+        self._current_proposal = proposal
+
+    def set_current_phase_for_testing(self, phase: VotingPhase) -> None:
+        """Set current phase for testing purposes."""
+        self._current_phase = phase
+
+    def set_votes_cast_for_testing(self, votes: dict[str, dict[str, Any]]) -> None:
+        """Set votes cast for testing purposes."""
+        self._votes_cast = votes
+
+    def calculate_voting_result_for_testing(self) -> dict[str, Any]:
+        """Calculate voting result for testing purposes."""
+        return self._calculate_voting_result()
+
     def authenticate_agent(self, agent_name: str) -> bool:
         """Authenticate an agent for voting operations."""
         try:
@@ -1202,10 +1224,6 @@ class VotingGroupChatManager(BaseGroupChatManager):
     async def process_voting_results_for_testing(self) -> list[str]:
         """Wrapper for _process_voting_results for testing."""
         return await self._process_voting_results()
-
-    def calculate_voting_result_for_testing(self) -> dict[str, Any]:
-        """Wrapper for _calculate_voting_result for testing."""
-        return self._calculate_voting_result()
 
     async def announce_voting_phase_for_testing(self) -> None:
         """Wrapper for _announce_voting_phase for testing."""

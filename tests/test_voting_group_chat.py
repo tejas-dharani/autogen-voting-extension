@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import logging
 import os
-from typing import cast
+from typing import Generator, cast
 from unittest.mock import patch
 
 import pytest
@@ -15,6 +15,7 @@ from autogen_agentchat.teams._group_chat._events import GroupChatTermination
 from autogen_ext.models.replay import ReplayChatCompletionClient
 
 from src.autogen_voting import VoteType, VotingGroupChat, VotingMethod, VotingPhase
+from src.autogen_voting.config import MODEL
 from src.autogen_voting.voting_group_chat import (
     AuditLogger,
     ByzantineFaultDetector,
@@ -40,7 +41,7 @@ if openai_api_key is not None:
 class TestVotingGroupChat:
     """Test suite for VotingGroupChat functionality."""
 
-    @pytest_asyncio.fixture  # type: ignore[misc]
+    @pytest_asyncio.fixture
     async def mock_model_client(self) -> ReplayChatCompletionClient:
         """Create a replay model client for testing."""
         return ReplayChatCompletionClient(
@@ -52,7 +53,7 @@ class TestVotingGroupChat:
             ]
         )
 
-    @pytest_asyncio.fixture  # type: ignore[misc]
+    @pytest_asyncio.fixture
     async def voting_agents(self, mock_model_client: ReplayChatCompletionClient) -> list[ChatAgent]:
         """Create test agents for voting."""
         return [
@@ -155,7 +156,7 @@ class TestVotingGroupChat:
 class TestVotingGroupChatIntegration:
     """Integration tests for VotingGroupChat with real OpenAI API."""
 
-    @pytest_asyncio.fixture  # type: ignore[misc]
+    @pytest_asyncio.fixture
     async def openai_model_client(self) -> "OpenAIChatCompletionClient":
         """Create a real OpenAI model client for integration testing."""
         if openai_api_key is None:
@@ -165,11 +166,11 @@ class TestVotingGroupChatIntegration:
         from autogen_ext.models.openai import OpenAIChatCompletionClient
 
         return OpenAIChatCompletionClient(
-            model="gpt-4o-mini",  # Use cheaper model for testing
+            model=MODEL,  # Use cheaper model for testing
             api_key=openai_api_key,
         )
 
-    @pytest_asyncio.fixture  # type: ignore[misc]
+    @pytest_asyncio.fixture
     async def real_voting_agents(self, openai_model_client: "OpenAIChatCompletionClient") -> list[ChatAgent]:
         """Create test agents with real OpenAI client for integration testing."""
         return [
@@ -236,7 +237,7 @@ class TestVotingGroupChatIntegration:
 class TestVotingGroupChatManager:
     """Comprehensive tests for VotingGroupChatManager functionality."""
 
-    @pytest_asyncio.fixture  # type: ignore[misc]
+    @pytest_asyncio.fixture
     async def voting_manager(self) -> VotingGroupChatManager:
         """Create a VotingGroupChatManager for testing."""
         output_queue: asyncio.Queue[BaseAgentEvent | BaseChatMessage | GroupChatTermination] = asyncio.Queue()
@@ -866,7 +867,7 @@ class TestVotingGroupChatSecurity:
 
         return AuditLogger()
 
-    @pytest_asyncio.fixture  # type: ignore[misc]
+    @pytest_asyncio.fixture
     async def secure_voting_manager(self) -> VotingGroupChatManager:
         """Create a VotingGroupChatManager for security testing."""
         output_queue: asyncio.Queue[BaseAgentEvent | BaseChatMessage | GroupChatTermination] = asyncio.Queue()
@@ -1123,14 +1124,14 @@ class TestVotingGroupChatSecurity:
             assert any("TEST_VIOLATION" in msg for msg in captured)
 
     @contextlib.contextmanager
-    def capture_logs(self):
+    def capture_logs(self) -> Generator[list[str], None, None]:
         """Context manager to capture log messages."""
-        captured_logs = []
+        captured_logs: list[str] = []
         logger = logging.getLogger("autogen_voting.audit")
 
         # Create a handler that captures logs
         class CapturingHandler(logging.Handler):
-            def emit(self, record):
+            def emit(self, record: logging.LogRecord) -> None:
                 captured_logs.append(record.getMessage())
 
         # Save original level
@@ -1370,28 +1371,30 @@ class TestVotingGroupChatSecurity:
         )
 
         # Set up the Byzantine detector to mark certain agents as suspicious
-        manager._byzantine_detector.suspicious_agents.add("Agent4")
-        manager._byzantine_detector.suspicious_agents.add("Agent5")
+        manager.byzantine_detector.suspicious_agents.add("Agent4")
+        manager.byzantine_detector.suspicious_agents.add("Agent5")
 
         # Update reputations to reflect Byzantine behavior
-        manager._byzantine_detector.reputation_scores["Agent4"] = 0.2
-        manager._byzantine_detector.reputation_scores["Agent5"] = 0.3
+        manager.byzantine_detector.reputation_scores["Agent4"] = 0.2
+        manager.byzantine_detector.reputation_scores["Agent5"] = 0.3
 
         # Set up a proposal
-        manager._current_proposal = {"id": "byzantine-test", "title": "Byzantine Test"}
-        manager._current_phase = VotingPhase.VOTING
+        manager.set_current_proposal_for_testing({"id": "byzantine-test", "title": "Byzantine Test"})
+        manager.set_current_phase_for_testing(VotingPhase.VOTING)
 
         # Create votes - 3 honest agents vs 2 Byzantine
-        manager._votes_cast = {
-            "Agent1": {"vote": VoteType.APPROVE, "confidence": 0.9},
-            "Agent2": {"vote": VoteType.APPROVE, "confidence": 0.8},
-            "Agent3": {"vote": VoteType.APPROVE, "confidence": 0.9},
-            "Agent4": {"vote": VoteType.REJECT, "confidence": 1.0},  # Byzantine
-            "Agent5": {"vote": VoteType.REJECT, "confidence": 1.0},  # Byzantine
-        }
+        manager.set_votes_cast_for_testing(
+            {
+                "Agent1": {"vote": VoteType.APPROVE, "confidence": 0.9},
+                "Agent2": {"vote": VoteType.APPROVE, "confidence": 0.8},
+                "Agent3": {"vote": VoteType.APPROVE, "confidence": 0.9},
+                "Agent4": {"vote": VoteType.REJECT, "confidence": 1.0},  # Byzantine
+                "Agent5": {"vote": VoteType.REJECT, "confidence": 1.0},  # Byzantine
+            }
+        )
 
         # Calculate voting results
-        result = manager._calculate_voting_result()
+        result = manager.calculate_voting_result_for_testing()
 
         # Despite Byzantine agents voting against, the result should still be approved
         # since the honest agents have higher total reputation weight

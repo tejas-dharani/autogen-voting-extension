@@ -6,12 +6,14 @@ import pytest
 from autogen_agentchat.agents import AssistantAgent
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
+from src.autogen_voting.config import MODEL
+
 
 @pytest.fixture
 def mock_model_client() -> MagicMock:
     """Mock OpenAI model client for testing."""
     mock_client = MagicMock(spec=OpenAIChatCompletionClient)
-    mock_client.model = "gpt-4o-mini"
+    mock_client.model = MODEL
     return mock_client
 
 

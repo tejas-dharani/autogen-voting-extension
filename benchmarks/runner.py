@@ -14,6 +14,7 @@ from autogen_ext.models.openai import OpenAIChatCompletionClient
 from openai import RateLimitError
 
 from autogen_voting import VotingGroupChat, VotingMethod
+from src.autogen_voting.config import MODEL
 
 from .metrics import BenchmarkMetrics, ComparisonResults, MetricsCollector
 from .scenarios import BenchmarkScenario, ScenarioType, get_all_scenarios
@@ -24,7 +25,7 @@ class BenchmarkRunner:
 
     def __init__(
         self,
-        model_name: str = "gpt-4o-mini",
+        model_name: str = MODEL,
         results_dir: str = "benchmark_results",
         rate_limit_delay: float = 1.0,
         max_retries: int = 3,

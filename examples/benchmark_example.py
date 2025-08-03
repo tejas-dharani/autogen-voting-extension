@@ -13,6 +13,7 @@ from autogen_voting import VotingMethod
 from benchmarks.metrics import ComparisonResults
 from benchmarks.runner import BenchmarkRunner
 from benchmarks.scenarios import ScenarioType, get_scenario_by_name
+from src.autogen_voting.config import MODEL
 
 
 async def run_single_benchmark():
@@ -24,7 +25,7 @@ async def run_single_benchmark():
         print("Please set OPENAI_API_KEY environment variable")
         return
 
-    runner = BenchmarkRunner(model_name="gpt-4o-mini")
+    runner = BenchmarkRunner(model_name=MODEL)
 
     # Get a specific scenario
     scenario = get_scenario_by_name("bug_detection_security")
@@ -51,7 +52,7 @@ async def run_code_review_benchmarks():
         print("Please set OPENAI_API_KEY environment variable")
         return
 
-    runner = BenchmarkRunner(model_name="gpt-4o-mini")
+    runner = BenchmarkRunner(model_name=MODEL)
 
     # Run all code review scenarios
     results = await runner.run_all_scenarios(
@@ -76,7 +77,7 @@ async def compare_voting_methods():
         print("Please set OPENAI_API_KEY environment variable")
         return
 
-    runner = BenchmarkRunner(model_name="gpt-4o-mini")
+    runner = BenchmarkRunner(model_name=MODEL)
     scenario = get_scenario_by_name("performance_optimization")
 
     if not scenario:
@@ -111,7 +112,7 @@ async def scalability_test():
         return
 
     # This is a conceptual example - you'd need to modify scenarios to support variable agent counts
-    runner = BenchmarkRunner(model_name="gpt-4o-mini")
+    runner = BenchmarkRunner(model_name=MODEL)
     scenario = get_scenario_by_name("code_quality_readability")
 
     if scenario:

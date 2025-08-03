@@ -16,6 +16,7 @@ from autogen_agentchat.conditions import MaxMessageTermination
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from autogen_voting import VotingGroupChat, VotingMethod
+from src.autogen_voting.config import MODEL
 
 
 def create_scalable_personas(agent_count: int, domain: str = "code_review") -> list[dict[str, str]]:
@@ -61,7 +62,7 @@ async def test_voting_scalability(
         print("Please set OPENAI_API_KEY environment variable")
         return {}
 
-    model_client = OpenAIChatCompletionClient(model="gpt-4o-mini")
+    model_client = OpenAIChatCompletionClient(model=MODEL)
 
     # Code review task
     task = """
@@ -177,7 +178,7 @@ async def test_consensus_difficulty() -> None:
         print("Please set OPENAI_API_KEY environment variable")
         return
 
-    model_client = OpenAIChatCompletionClient(model="gpt-4o-mini")
+    model_client = OpenAIChatCompletionClient(model=MODEL)
 
     # Create diverse agent perspectives
     personas = [

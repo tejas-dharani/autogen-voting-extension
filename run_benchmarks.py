@@ -14,6 +14,7 @@ from autogen_voting import VotingMethod
 from benchmarks.metrics import ComparisonResults
 from benchmarks.runner import BenchmarkRunner
 from benchmarks.scenarios import BenchmarkScenario, ScenarioType, get_scenario_by_name
+from src.autogen_voting.config import MODEL
 
 
 async def run_validation_test() -> bool:
@@ -26,7 +27,7 @@ async def run_validation_test() -> bool:
         return False
 
     try:
-        runner = BenchmarkRunner(model_name="gpt-4o-mini", rate_limit_delay=0.5, max_retries=3)
+        runner = BenchmarkRunner(model_name=MODEL, rate_limit_delay=0.5, max_retries=3)
 
         # Quick scenarios for each type
         test_scenarios = [
@@ -118,8 +119,8 @@ async def run_quick_test() -> bool:
         return False
 
     try:
-        print("debug: Creating BenchmarkRunner with model gpt-4o-mini")
-        runner = BenchmarkRunner(model_name="gpt-4o-mini", rate_limit_delay=2.0, max_retries=5)
+        print(f"debug: Creating BenchmarkRunner with model {MODEL}")
+        runner = BenchmarkRunner(model_name=MODEL, rate_limit_delay=2.0, max_retries=5)
 
         # Create a simple test scenario
         print("debug: Creating test scenario for code review")
@@ -176,8 +177,8 @@ async def run_full_benchmarks(
         voting_methods = [VotingMethod.MAJORITY, VotingMethod.QUALIFIED_MAJORITY, VotingMethod.UNANIMOUS]
         print("debug: Using default voting methods: MAJORITY, QUALIFIED_MAJORITY, UNANIMOUS")
 
-    print("debug: Creating BenchmarkRunner with model gpt-4o-mini")
-    runner = BenchmarkRunner(model_name="gpt-4o-mini", rate_limit_delay=2.0, max_retries=5)
+    print(f"debug: Creating BenchmarkRunner with model {MODEL}")
+    runner = BenchmarkRunner(model_name=MODEL, rate_limit_delay=2.0, max_retries=5)
 
     all_results: list[ComparisonResults] = []
 
@@ -233,7 +234,7 @@ async def run_scalability_test() -> None:
 
     # Run a basic scalability comparison
     print("debug: Creating BenchmarkRunner for scalability test")
-    runner = BenchmarkRunner(model_name="gpt-4o-mini", rate_limit_delay=2.0, max_retries=5)
+    runner = BenchmarkRunner(model_name=MODEL, rate_limit_delay=2.0, max_retries=5)
 
     print("debug: Getting bug_detection_security scenario")
     scenario = get_scenario_by_name("bug_detection_security")
