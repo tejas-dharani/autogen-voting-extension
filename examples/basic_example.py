@@ -1,14 +1,14 @@
 """
-Basic example of using the AutoGen Voting Extension.
+Basic example of using VotingAI.
 
-This demonstrates how to use the voting extension as a standalone package.
+This demonstrates how to use VotingAI as a standalone package.
 """
 
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.conditions import MaxMessageTermination
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
-from autogen_voting import VotingGroupChat, VotingMethod
+from votingai import VotingGroupChat, VotingMethod
 
 
 async def main():

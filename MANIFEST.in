@@ -5,7 +5,7 @@ include CHANGELOG.md
 include pyproject.toml
 
 # Include package marker for typing
-include src/autogen_voting/py.typed
+include src/votingai/py.typed
 
 # Include documentation
 recursive-include docs *.md *.rst *.txt *.py

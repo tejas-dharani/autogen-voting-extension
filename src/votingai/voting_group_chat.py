@@ -1185,7 +1185,7 @@ class VotingGroupChat(BaseGroupChat, Component[VotingGroupChatConfig]):
             import asyncio
             from autogen_ext.models.openai import OpenAIChatCompletionClient
             from autogen_agentchat.agents import AssistantAgent
-            from autogen_voting import VotingGroupChat, VotingMethod
+            from votingai import VotingGroupChat, VotingMethod
             from autogen_agentchat.conditions import MaxMessageTermination
 
 
@@ -1233,7 +1233,7 @@ class VotingGroupChat(BaseGroupChat, Component[VotingGroupChatConfig]):
             import asyncio
             from autogen_ext.models.openai import OpenAIChatCompletionClient
             from autogen_agentchat.agents import AssistantAgent
-            from autogen_voting import VotingGroupChat, VotingMethod
+            from votingai import VotingGroupChat, VotingMethod
             from autogen_agentchat.conditions import MaxMessageTermination
 
 
@@ -1279,7 +1279,7 @@ class VotingGroupChat(BaseGroupChat, Component[VotingGroupChatConfig]):
             import asyncio
             from autogen_ext.models.openai import OpenAIChatCompletionClient
             from autogen_agentchat.agents import AssistantAgent
-            from autogen_voting import VotingGroupChat, VotingMethod
+            from votingai import VotingGroupChat, VotingMethod
             from autogen_agentchat.conditions import MaxMessageTermination
 
 

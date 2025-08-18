@@ -10,11 +10,11 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from autogen_voting import VotingMethod
+from votingai import VotingMethod
 from benchmarks.metrics import ComparisonResults
 from benchmarks.runner import BenchmarkRunner
 from benchmarks.scenarios import BenchmarkScenario, ScenarioType, get_scenario_by_name
-from src.autogen_voting.config import MODEL
+from src.votingai.config import MODEL
 
 
 async def run_validation_test() -> bool:

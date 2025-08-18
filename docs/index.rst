@@ -1,8 +1,8 @@
 AutoGen Voting Extension Documentation
 ======================================
 
-.. image:: https://badge.fury.io/py/autogen-voting-extension.svg
-   :target: https://badge.fury.io/py/autogen-voting-extension
+.. image:: https://badge.fury.io/py/votingai.svg
+   :target: https://badge.fury.io/py/votingai
    :alt: PyPI version
 
 .. image:: https://img.shields.io/badge/python-3.8+-blue.svg
@@ -27,7 +27,7 @@ Installation
    pip install autogen-agentchat autogen-ext[openai]
 
    # Install the voting extension
-   pip install autogen-voting-extension
+   pip install votingai
 
 Basic Example
 ~~~~~~~~~~~~~
@@ -39,7 +39,7 @@ Basic Example
    from autogen_agentchat.agents import AssistantAgent
    from autogen_agentchat.conditions import MaxMessageTermination
 
-   from autogen_voting import VotingGroupChat, VotingMethod
+   from votingai import VotingGroupChat, VotingMethod
 
    async def main():
        model_client = OpenAIChatCompletionClient(model="gpt-4o")
@@ -157,10 +157,10 @@ Use Cases
 Links
 -----
 
-* **GitHub Repository**: https://github.com/your-username/autogen-voting-extension
-* **PyPI Package**: https://pypi.org/project/autogen-voting-extension/
+* **GitHub Repository**: https://github.com/your-username/votingai
+* **PyPI Package**: https://pypi.org/project/votingai/
 * **AutoGen Documentation**: https://microsoft.github.io/autogen/
-* **Issues & Support**: https://github.com/your-username/autogen-voting-extension/issues
+* **Issues & Support**: https://github.com/your-username/votingai/issues
 
 Indices and tables
 ==================

@@ -26,7 +26,7 @@ from autogen_agentchat.base import ChatAgent
 from autogen_ext.models.replay import ReplayChatCompletionClient
 
 sys.path.append(".")
-from src.autogen_voting import VotingMethod
+from src.votingai import VotingMethod
 
 
 @dataclass
@@ -169,7 +169,7 @@ class AdvancedBenchmarkSuite:
 
             return BenchmarkResult(
                 scenario=scenario,
-                framework="autogen_voting",
+                framework="votingai",
                 agents_count=agent_count,
                 execution_time=execution_time,
                 message_count=agent_count + 2,
@@ -187,7 +187,7 @@ class AdvancedBenchmarkSuite:
         except Exception as e:
             return BenchmarkResult(
                 scenario=scenario,
-                framework="autogen_voting",
+                framework="votingai",
                 agents_count=agent_count,
                 execution_time=time.perf_counter() - start_time,
                 message_count=0,
@@ -312,14 +312,14 @@ class AdvancedBenchmarkSuite:
         print("🚀 Starting comprehensive benchmark suite...")
 
         all_results = []
-        frameworks = ["autogen_voting", "langgraph", "crewai", "openai_swarm", "standard_groupchat"]
+        frameworks = ["votingai", "langgraph", "crewai", "openai_swarm", "standard_groupchat"]
 
         # 1. Performance benchmarks across frameworks
         print("\n📊 Running performance benchmarks...")
         for scenario_name, scenario_desc in self.scenarios.items():
             _ = scenario_name  # suppress unused variable warning
             for framework in frameworks:
-                if framework == "autogen_voting":
+                if framework == "votingai":
                     result = await self.benchmark_voting_orchestration(scenario_desc, 5)
                 else:
                     result = await self.benchmark_competitor_framework(framework, scenario_desc, 5)
@@ -488,8 +488,8 @@ async def main():
     print("AutoGen Voting Extension performance analysis:")
 
     summary = results["summary_statistics"]
-    if "autogen_voting" in summary:
-        voting_stats = summary["autogen_voting"]
+    if "votingai" in summary:
+        voting_stats = summary["votingai"]
         print(f"  • Average execution time: {voting_stats['avg_execution_time']:.3f}s")
         print(f"  • Average throughput: {voting_stats['avg_throughput']:.2f} ops/s")
         print(f"  • Consensus quality: {voting_stats['avg_consensus_quality']:.1%}")

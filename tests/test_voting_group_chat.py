@@ -14,9 +14,9 @@ from autogen_agentchat.messages import BaseAgentEvent, BaseChatMessage, MessageF
 from autogen_agentchat.teams._group_chat._events import GroupChatTermination
 from autogen_ext.models.replay import ReplayChatCompletionClient
 
-from src.autogen_voting import VoteType, VotingGroupChat, VotingMethod, VotingPhase
-from src.autogen_voting.config import MODEL
-from src.autogen_voting.voting_group_chat import (
+from src.votingai import VoteType, VotingGroupChat, VotingMethod, VotingPhase
+from src.votingai.config import MODEL
+from src.votingai.voting_group_chat import (
     AuditLogger,
     ByzantineFaultDetector,
     ProposalContent,
@@ -849,21 +849,21 @@ class TestVotingGroupChatSecurity:
     @pytest.fixture
     def security_validator(self) -> SecurityValidator:
         """Create a SecurityValidator instance for testing."""
-        from src.autogen_voting.voting_group_chat import SecurityValidator
+        from src.votingai.voting_group_chat import SecurityValidator
 
         return SecurityValidator()
 
     @pytest.fixture
     def byzantine_detector(self) -> ByzantineFaultDetector:
         """Create a ByzantineFaultDetector instance for testing."""
-        from src.autogen_voting.voting_group_chat import ByzantineFaultDetector
+        from src.votingai.voting_group_chat import ByzantineFaultDetector
 
         return ByzantineFaultDetector(total_agents=3)
 
     @pytest.fixture
     def audit_logger(self) -> AuditLogger:
         """Create an AuditLogger instance for testing."""
-        from src.autogen_voting.voting_group_chat import AuditLogger
+        from src.votingai.voting_group_chat import AuditLogger
 
         return AuditLogger()
 
@@ -1127,7 +1127,7 @@ class TestVotingGroupChatSecurity:
     def capture_logs(self) -> Generator[list[str], None, None]:
         """Context manager to capture log messages."""
         captured_logs: list[str] = []
-        logger = logging.getLogger("autogen_voting.audit")
+        logger = logging.getLogger("votingai.audit")
 
         # Create a handler that captures logs
         class CapturingHandler(logging.Handler):

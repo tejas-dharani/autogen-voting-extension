@@ -9,7 +9,7 @@ Before running these examples, make sure you have:
 1. **Installed the extension**:
    ```bash
    pip install autogen-agentchat autogen-ext[openai]
-   pip install autogen-voting-extension
+   pip install votingai
    ```
 
 2. **Set up your OpenAI API key**:
@@ -122,7 +122,7 @@ from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.conditions import MaxMessageTermination
 
-from autogen_voting import VotingGroupChat, VotingMethod
+from votingai import VotingGroupChat, VotingMethod
 
 async def my_voting_example():
     model_client = OpenAIChatCompletionClient(model="gpt-4o")
@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
 2. **Import Errors**
    ```bash
-   pip install autogen-agentchat autogen-ext[openai] autogen-voting-extension
+   pip install autogen-agentchat autogen-ext[openai] votingai
    ```
 
 3. **Timeout Issues**
@@ -204,4 +204,4 @@ Have a great use case example? We'd love to include it!
 
 ---
 
-For more information, see the main [README.md](../README.md) and [documentation](https://autogen-voting-extension.readthedocs.io/).
+For more information, see the main [README.md](../README.md) and [documentation](https://votingai.readthedocs.io/).

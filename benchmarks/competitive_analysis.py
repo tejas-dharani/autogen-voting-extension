@@ -100,7 +100,7 @@ class CompetitiveAnalyzer:
         """Initialize competitive framework data based on research."""
 
         return {
-            "autogen_voting": FrameworkMetrics(
+            "votingai": FrameworkMetrics(
                 name="AutoGen Voting Extension",
                 version="0.1.0",
                 avg_latency=0.85,  # Our measured performance
@@ -310,7 +310,7 @@ class CompetitiveAnalyzer:
         winner = sorted_frameworks[0]
         second_place: Optional[Tuple[str, ScoreData]] = sorted_frameworks[1] if len(sorted_frameworks) > 1 else None
 
-        if winner[0] == "autogen_voting":
+        if winner[0] == "votingai":
             advantage = (winner[1]["total_score"] - second_place[1]["total_score"]) * 100 if second_place else 0
             report.append(
                 f"🏆 **AutoGen Voting Extension emerges as the clear leader** with a {advantage:.1f}% advantage over the second-place framework."
@@ -467,7 +467,7 @@ class CompetitiveAnalyzer:
 
         market_leaders = [name for name, score_data in scores.items() if score_data["total_score"] >= 0.7]
 
-        if "autogen_voting" in market_leaders:
+        if "votingai" in market_leaders:
             report.append(
                 "🎯 **AutoGen Voting Extension is positioned as a market leader** in the multi-agent orchestration space."
             )
@@ -522,7 +522,7 @@ class CompetitiveAnalyzer:
 
         # 1. Overall Scores Comparison
         total_scores = [scores[name]["total_score"] for name in framework_names]
-        colors = ["#1f77b4" if name == "autogen_voting" else "#ff7f0e" for name in framework_names]
+        colors = ["#1f77b4" if name == "votingai" else "#ff7f0e" for name in framework_names]
 
         bars = axes[0, 0].bar(range(len(display_names)), total_scores, color=colors)
         axes[0, 0].set_title("Overall Competitive Scores", fontweight="bold")
@@ -532,7 +532,7 @@ class CompetitiveAnalyzer:
 
         # Highlight AutoGen Voting
         for i, name in enumerate(framework_names):
-            if name == "autogen_voting":
+            if name == "votingai":
                 bars[i].set_color("#2ca02c")
                 bars[i].set_alpha(0.8)
 
@@ -542,15 +542,15 @@ class CompetitiveAnalyzer:
         competitor_avg: List[float] = []
 
         for metric in performance_metrics:
-            autogen_val = getattr(self.frameworks["autogen_voting"], metric)
+            autogen_val = getattr(self.frameworks["votingai"], metric)
             if metric == "avg_latency":
                 autogen_val = 1 / autogen_val  # Invert for radar (higher is better)
                 competitor_vals = [
-                    1 / getattr(self.frameworks[name], metric) for name in framework_names if name != "autogen_voting"
+                    1 / getattr(self.frameworks[name], metric) for name in framework_names if name != "votingai"
                 ]
             else:
                 competitor_vals = [
-                    getattr(self.frameworks[name], metric) for name in framework_names if name != "autogen_voting"
+                    getattr(self.frameworks[name], metric) for name in framework_names if name != "votingai"
                 ]
 
             autogen_values.append(autogen_val)
@@ -584,8 +584,8 @@ class CompetitiveAnalyzer:
         throughputs = [self.frameworks[name].throughput for name in framework_names]
 
         for i, name in enumerate(framework_names):
-            color = "#2ca02c" if name == "autogen_voting" else "#ff7f0e"
-            size = 200 if name == "autogen_voting" else 100
+            color = "#2ca02c" if name == "votingai" else "#ff7f0e"
+            size = 200 if name == "votingai" else 100
             axes[0, 2].scatter(latencies[i], throughputs[i], s=size, color=color, alpha=0.7)
             axes[0, 2].annotate(
                 display_names[i].replace(" ", "\n"),
@@ -628,8 +628,8 @@ class CompetitiveAnalyzer:
 
         # Create bubble chart
         for i, name in enumerate(framework_names):
-            color = "#2ca02c" if name == "autogen_voting" else "#ff7f0e"
-            size = 300 if name == "autogen_voting" else 150
+            color = "#2ca02c" if name == "votingai" else "#ff7f0e"
+            size = 300 if name == "votingai" else 150
             axes[1, 1].scatter(max_agents[i], 1 - scalability_factors[i], s=size, color=color, alpha=0.7)
             axes[1, 1].annotate(
                 display_names[i].replace(" ", "\n"),
@@ -723,30 +723,30 @@ class CompetitiveAnalyzer:
 
         # Find market leader
         market_leader = max(scores.items(), key=lambda x: x[1]["total_score"])
-        if market_leader[0] == "autogen_voting":
+        if market_leader[0] == "votingai":
             insights.append("AutoGen Voting Extension emerges as the clear market leader")
 
             # Find specific advantages
-            autogen_scores = scores["autogen_voting"]
+            autogen_scores = scores["votingai"]
             for category, score in autogen_scores.items():
                 if category != "total_score" and isinstance(score, (int, float)) and score > 0.8:
                     insights.append(f"AutoGen Voting excels in {category.replace('_', ' ')} ({score:.1%})")
 
         # Performance insights
         fastest_framework = min(self.frameworks.items(), key=lambda x: x[1].avg_latency)
-        if fastest_framework[0] == "autogen_voting":
+        if fastest_framework[0] == "votingai":
             insights.append("AutoGen Voting achieves competitive performance while maintaining high quality")
 
         # Quality insights
         highest_quality = max(self.frameworks.items(), key=lambda x: x[1].consensus_quality)
-        if highest_quality[0] == "autogen_voting":
+        if highest_quality[0] == "votingai":
             insights.append(
                 f"AutoGen Voting delivers superior consensus quality ({highest_quality[1].consensus_quality:.1%})"
             )
 
         # Security insights
         most_secure = max(self.frameworks.items(), key=lambda x: x[1].security_features)
-        if most_secure[0] == "autogen_voting":
+        if most_secure[0] == "votingai":
             insights.append("AutoGen Voting provides enterprise-grade security features")
 
         return insights

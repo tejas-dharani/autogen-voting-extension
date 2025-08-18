@@ -1,1 +1,1 @@
-"""Tests for autogen-voting-extension."""
+"""Tests for votingai."""

@@ -1,4 +1,4 @@
-"""AutoGen Voting Extension - Democratic consensus for multi-agent systems."""
+"""VotingAI - Democratic Multi-Agent Systems Built on AutoGen."""
 
 from .voting_group_chat import VoteType, VotingGroupChat, VotingMethod, VotingPhase
 

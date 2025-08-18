@@ -99,5 +99,5 @@ For detailed usage instructions, see the [README.md](README.md) and check out th
 
 ---
 
-[Unreleased]: https://github.com/your-username/autogen-voting-extension/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/your-username/autogen-voting-extension/releases/tag/v0.1.0
+[Unreleased]: https://github.com/your-username/votingai/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/your-username/votingai/releases/tag/v0.1.0

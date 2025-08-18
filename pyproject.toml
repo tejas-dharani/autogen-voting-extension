@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "autogen-voting-extension"
+name = "votingai"
 version = "0.1.0"
-description = "Voting extension for AutoGen"
+description = "VotingAI: Democratic Multi-Agent Systems Built on AutoGen"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -15,7 +15,7 @@ maintainers = [
     {name = "Tejas Dharani", email = "tejas.dharani10@gmail.com"}
 ]
 license = {text = "MIT"}
-keywords = ["autogen", "voting", "multi-agent", "consensus", "ai", "agents", "democracy"]
+keywords = ["votingai", "voting", "multi-agent", "consensus", "ai", "agents", "democracy", "autogen"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -41,10 +41,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/tejas-dharani/autogen-voting-extension"
-Repository = "https://github.com/tejas-dharani/autogen-voting-extension.git"
-Issues = "https://github.com/tejas-dharani/autogen-voting-extension/issues"
-Changelog = "https://github.com/tejas-dharani/autogen-voting-extension/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/tejas-dharani/votingai"
+Repository = "https://github.com/tejas-dharani/votingai.git"
+Issues = "https://github.com/tejas-dharani/votingai/issues"
+Changelog = "https://github.com/tejas-dharani/votingai/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [

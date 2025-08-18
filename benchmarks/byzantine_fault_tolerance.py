@@ -22,8 +22,8 @@ from uuid import uuid4
 import numpy as np
 
 sys.path.append(".")
-from src.autogen_voting import VoteType
-from src.autogen_voting.voting_group_chat import ProposalContent
+from src.votingai import VoteType
+from src.votingai.voting_group_chat import ProposalContent
 
 
 class AgentBehavior(Enum):

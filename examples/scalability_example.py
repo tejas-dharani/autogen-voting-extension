@@ -15,8 +15,8 @@ from autogen_agentchat.base import ChatAgent
 from autogen_agentchat.conditions import MaxMessageTermination
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
-from autogen_voting import VotingGroupChat, VotingMethod
-from src.autogen_voting.config import MODEL
+from votingai import VotingGroupChat, VotingMethod
+from src.votingai.config import MODEL
 
 
 def create_scalable_personas(agent_count: int, domain: str = "code_review") -> list[dict[str, str]]:

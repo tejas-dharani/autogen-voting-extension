@@ -13,8 +13,8 @@ from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from openai import RateLimitError
 
-from autogen_voting import VotingGroupChat, VotingMethod
-from src.autogen_voting.config import MODEL
+from votingai import VotingGroupChat, VotingMethod
+from src.votingai.config import MODEL
 
 from .metrics import BenchmarkMetrics, ComparisonResults, MetricsCollector
 from .scenarios import BenchmarkScenario, ScenarioType, get_all_scenarios

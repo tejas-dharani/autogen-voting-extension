@@ -13,8 +13,8 @@ from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.conditions import MaxMessageTermination
 from autogen_agentchat.messages import TextMessage
 
-from autogen_voting import VotingGroupChat
-from autogen_voting.voting_group_chat import VotingMethod
+from votingai import VotingGroupChat
+from votingai.voting_group_chat import VotingMethod
 from benchmarks.scenarios import get_scenario_by_name, ScenarioType
 from benchmarks.metrics import MetricsCollector
 from benchmarks.advanced_metrics import AdvancedMetricsCalculator

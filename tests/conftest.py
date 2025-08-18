@@ -6,7 +6,7 @@ import pytest
 from autogen_agentchat.agents import AssistantAgent
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
-from src.autogen_voting.config import MODEL
+from src.votingai.config import MODEL
 
 
 @pytest.fixture

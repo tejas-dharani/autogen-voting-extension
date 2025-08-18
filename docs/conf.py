@@ -1,4 +1,4 @@
-"""Sphinx configuration for autogen-voting-extension documentation."""
+"""Sphinx configuration for votingai documentation."""
 
 import sys
 from pathlib import Path
@@ -97,7 +97,7 @@ html_css_files = ["custom.css"]
 html_context = {
     "display_github": True,
     "github_user": "your-username",
-    "github_repo": "autogen-voting-extension",
+    "github_repo": "votingai",
     "github_version": "main",
     "conf_py_path": "/docs/",
 }
@@ -114,7 +114,7 @@ latex_elements = {
 latex_documents = [
     (
         "index",
-        "autogen-voting-extension.tex",
+        "votingai.tex",
         "AutoGen Voting Extension Documentation",
         "Tejas Dharani",
         "manual",
@@ -125,7 +125,7 @@ latex_documents = [
 man_pages = [
     (
         "index",
-        "autogen-voting-extension",
+        "votingai",
         "AutoGen Voting Extension Documentation",
         [author],
         1,
@@ -136,10 +136,10 @@ man_pages = [
 texinfo_documents = [
     (
         "index",
-        "autogen-voting-extension",
+        "votingai",
         "AutoGen Voting Extension Documentation",
         author,
-        "autogen-voting-extension",
+        "votingai",
         "Democratic consensus for Microsoft AutoGen multi-agent systems.",
         "Miscellaneous",
     ),

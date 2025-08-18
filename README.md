@@ -1,11 +1,11 @@
-# AutoGen Voting Extension 🗳️
+# VotingAI 🗳️
 
-[![PyPI version](https://img.shields.io/pypi/v/autogen-voting-extension.svg)](https://pypi.org/project/autogen-voting-extension/)
+[![PyPI version](https://img.shields.io/pypi/v/votingai.svg)](https://pypi.org/project/votingai/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Research Quality](https://img.shields.io/badge/Research-Academic%20Grade-red.svg)](https://docs.anthropic.com/en/docs/claude-code)
 
-A **research-grade academic-quality** extension for Microsoft AutoGen that enables **democratic consensus** in multi-agent systems through configurable voting mechanisms with **enterprise security**, **fairness guarantees**, and **statistical rigor**. Perfect for code reviews, architecture decisions, content moderation, medical diagnosis, and safety-critical scenarios requiring transparent group decision-making.
+**VotingAI: Democratic Multi-Agent Systems Built on AutoGen** - A research-grade academic framework that enables **democratic consensus** in multi-agent systems through configurable voting mechanisms with **enterprise security**, **fairness guarantees**, and **statistical rigor**. Perfect for code reviews, architecture decisions, content moderation, medical diagnosis, and safety-critical scenarios requiring transparent group decision-making.
 
 ## ✨ Research-Grade Features
 
@@ -64,21 +64,21 @@ A **research-grade academic-quality** extension for Microsoft AutoGen that enabl
 ## 🚀 Installation
 
 ```bash
-# Install the voting extension (includes AutoGen dependencies)
-pip install autogen-voting-extension
+# Install VotingAI (includes AutoGen dependencies)
+pip install votingai
 ```
 
 For development with additional tools:
 
 ```bash
-pip install autogen-voting-extension[dev]
+pip install votingai[dev]
 ```
 
 For development from source:
 
 ```bash
-git clone https://github.com/tejas-dharani/autogen-voting-extension.git
-cd autogen-voting-extension
+git clone https://github.com/tejas-dharani/votingai.git
+cd votingai
 pip install -e ".[dev]"
 ```
 
@@ -90,7 +90,7 @@ from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.conditions import MaxMessageTermination
 
-from autogen_voting import VotingGroupChat, VotingMethod
+from votingai import VotingGroupChat, VotingMethod
 
 async def main():
     model_client = OpenAIChatCompletionClient(model="gpt-4o")
@@ -205,7 +205,7 @@ voting_team = VotingGroupChat(
 ### Voting Methods
 
 ```python
-from autogen_voting import VotingMethod
+from votingai import VotingMethod
 
 VotingMethod.MAJORITY           # >50% approval
 VotingMethod.PLURALITY          # Most votes wins
@@ -352,10 +352,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- **PyPI Package**: [autogen-voting-extension](https://pypi.org/project/autogen-voting-extension/)
-- **GitHub Repository**: [autogen-voting-extension](https://github.com/tejas-dharani/autogen-voting-extension)
+- **PyPI Package**: [votingai](https://pypi.org/project/votingai/)
+- **GitHub Repository**: [votingai](https://github.com/tejas-dharani/votingai)
 - **AutoGen Documentation**: [Microsoft AutoGen](https://microsoft.github.io/autogen/)
-- **Issues & Support**: [GitHub Issues](https://github.com/tejas-dharani/autogen-voting-extension/issues)
+- **Issues & Support**: [GitHub Issues](https://github.com/tejas-dharani/votingai/issues)
 
 ---
 
