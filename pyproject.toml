@@ -31,9 +31,9 @@ classifiers = [
 ]
 dependencies = [
     "autogen-agentchat>=0.4.0",
-    "autogen-core>=0.4.0",
+    "autogen-core>=0.4.0", 
     "autogen-ext[openai]>=0.4.0",
-    "openai>=1.0.0",
+    "openai>=1.99.0",  # Latest version supports GPT-5
 ]
 
 [project.urls]
