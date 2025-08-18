@@ -157,10 +157,9 @@ Use Cases
 Links
 -----
 
-* **GitHub Repository**: https://github.com/your-username/votingai
+* **GitHub Repository**: https://github.com/tejas-dharani/votingai
 * **PyPI Package**: https://pypi.org/project/votingai/
-* **AutoGen Documentation**: https://microsoft.github.io/autogen/
-* **Issues & Support**: https://github.com/your-username/votingai/issues
+* **Issues & Support**: https://github.com/tejas-dharani/votingai/issues
 
 Indices and tables
 ==================

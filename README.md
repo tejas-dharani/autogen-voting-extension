@@ -354,7 +354,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **PyPI Package**: [votingai](https://pypi.org/project/votingai/)
 - **GitHub Repository**: [votingai](https://github.com/tejas-dharani/votingai)
-- **AutoGen Documentation**: [Microsoft AutoGen](https://microsoft.github.io/autogen/)
 - **Issues & Support**: [GitHub Issues](https://github.com/tejas-dharani/votingai/issues)
 
 ---
