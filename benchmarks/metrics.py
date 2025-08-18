@@ -4,7 +4,9 @@ import json
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Dict, List
+
+from .advanced_metrics import FairnessMetrics, SafetyMetrics, QualityMetrics, AdvancedMetricsCalculator
 
 
 @dataclass
@@ -38,6 +40,11 @@ class BenchmarkMetrics:
 
     # Custom metrics
     custom_metrics: dict[str, Any] = field(default_factory=dict)  # type: ignore
+    
+    # Advanced metrics (research-grade)
+    fairness_metrics: FairnessMetrics | None = None
+    safety_metrics: SafetyMetrics | None = None
+    quality_metrics: QualityMetrics | None = None
 
     def complete_benchmark(self) -> None:
         """Mark benchmark as complete and calculate duration."""
@@ -73,7 +80,7 @@ class BenchmarkMetrics:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert metrics to dictionary for serialization."""
-        return {
+        result = {
             "timestamp": datetime.now().isoformat(),
             "duration_seconds": self.duration_seconds,
             "decision_reached": self.decision_reached,
@@ -90,6 +97,42 @@ class BenchmarkMetrics:
             "tie_breaks": self.tie_breaks,
             "custom_metrics": self.custom_metrics,
         }
+        
+        # Add advanced metrics if available
+        if self.fairness_metrics:
+            result["fairness_metrics"] = self.fairness_metrics.__dict__
+        if self.safety_metrics:
+            result["safety_metrics"] = self.safety_metrics.__dict__
+        if self.quality_metrics:
+            result["quality_metrics"] = self.quality_metrics.__dict__
+            
+        return result
+
+    def calculate_advanced_metrics(
+        self, 
+        decisions: List[Dict[str, Any]], 
+        agent_attributes: Dict[str, Dict[str, Any]],
+        content_data: List[Dict[str, Any]] = None,
+        ground_truth: List[Any] = None
+    ) -> None:
+        """Calculate advanced fairness, safety, and quality metrics."""
+        calculator = AdvancedMetricsCalculator()
+        
+        # Calculate fairness metrics
+        if decisions and agent_attributes:
+            self.fairness_metrics = calculator.calculate_fairness_metrics(decisions, agent_attributes)
+        
+        # Calculate safety metrics
+        if content_data:
+            self.safety_metrics = calculator.calculate_safety_metrics(content_data, decisions or [])
+        
+        # Calculate quality metrics
+        if decisions and ground_truth:
+            predictions = [d.get("decision") for d in decisions]
+            confidence_scores = [d.get("confidence", 0.5) for d in decisions]
+            self.quality_metrics = calculator.calculate_quality_metrics(
+                predictions, ground_truth, confidence_scores
+            )
 
     def save_to_file(self, filename: str) -> None:
         """Save metrics to JSON file."""

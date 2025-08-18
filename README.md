@@ -3,36 +3,63 @@
 [![PyPI version](https://img.shields.io/pypi/v/autogen-voting-extension.svg)](https://pypi.org/project/autogen-voting-extension/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Research Quality](https://img.shields.io/badge/Research-Academic%20Grade-red.svg)](https://docs.anthropic.com/en/docs/claude-code)
 
-A powerful extension for Microsoft AutoGen that enables **democratic consensus** in multi-agent systems through configurable voting mechanisms. Perfect for code reviews, architecture decisions, content moderation, and any scenario requiring transparent group decision-making.
+A **research-grade academic-quality** extension for Microsoft AutoGen that enables **democratic consensus** in multi-agent systems through configurable voting mechanisms with **enterprise security**, **fairness guarantees**, and **statistical rigor**. Perfect for code reviews, architecture decisions, content moderation, medical diagnosis, and safety-critical scenarios requiring transparent group decision-making.
 
-## ✨ Features
+## ✨ Research-Grade Features
 
-### 🗳️ Multiple Voting Methods
+### 🗳️ Democratic Voting Methods
 - **Majority** - Requires >50% approval
 - **Plurality** - Most votes wins (simple)
 - **Unanimous** - All voters must agree  
 - **Qualified Majority** - Configurable threshold (e.g., 2/3)
 - **Ranked Choice** - Ranked preferences with elimination
 
-### ⚙️ Advanced Configuration
-- **Configurable thresholds** for qualified majority voting
-- **Discussion rounds** before final decisions
-- **Abstention support** with flexible participation rules
-- **Reasoning requirements** for transparent decision-making
-- **Confidence scoring** for vote quality assessment
-- **Auto-proposer selection** for structured workflows
+### 🔒 Enterprise Security (NEW)
+- **Cryptographic Signatures** - HMAC-based vote integrity verification
+- **Input Validation** - XSS prevention and sanitization
+- **Audit Logging** - Complete transparency and compliance trails
+- **Byzantine Fault Tolerance** - Reputation-based detection and mitigation
+- **Replay Attack Prevention** - Nonce-based security
+
+### ⚖️ Fairness & Ethics (NEW)
+- **Demographic Parity** - Equal treatment across agent groups
+- **Equalized Odds** - Fair outcomes for different agent types
+- **Individual Fairness** - Consistent decisions for similar cases
+- **Bias Detection** - Automated identification of discriminatory patterns
+- **Voice Equality** - Balanced participation across all agents
+
+### 🛡️ Safety Metrics (NEW)
+- **Toxicity Detection** - Harmful content identification
+- **Reasoning Quality** - Evidence-based decision validation
+- **Factual Accuracy** - Truth verification in agent responses
+- **Harm Prevention** - Safety-critical decision safeguards
+
+### 📊 Statistical Rigor (NEW)
+- **Bonferroni Correction** - Multiple comparison statistical validity
+- **Effect Sizes** - Cohen's d and Hedge's g calculations
+- **Bootstrap Confidence Intervals** - Robust statistical inference
+- **Power Analysis** - Sample size validation (β = 0.8)
+- **Calibration Metrics** - Expected Calibration Error (ECE)
+
+### 🏥 Safety-Critical Applications
+- **Medical Diagnosis** - Multi-specialist consultations with safety guarantees
+- **Code Security Review** - Vulnerability detection with expert consensus  
+- **Architecture Decisions** - High-stakes technical choices
+- **Content Moderation** - Policy compliance with bias prevention
 
 ### 📨 Rich Message Types
 - **ProposalMessage** - Structured proposals with options
 - **VoteMessage** - Votes with reasoning and confidence scores
 - **VotingResultMessage** - Comprehensive result summaries with analytics
 
-### 🔄 State Management
+### 🔄 Advanced State Management
 - **Persistent voting state** across conversations
 - **Phase tracking** (Proposal → Voting → Discussion → Consensus)
-- **Vote audit trails** with detailed logging
+- **Cryptographically signed audit trails** with detailed logging
 - **Automatic result calculation** and consensus detection
+- **Real-time Byzantine fault monitoring**
 
 ## 🚀 Installation
 

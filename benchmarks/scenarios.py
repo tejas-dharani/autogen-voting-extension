@@ -11,6 +11,7 @@ class ScenarioType(Enum):
     CODE_REVIEW = "code_review"
     ARCHITECTURE_DECISION = "architecture_decision"
     CONTENT_MODERATION = "content_moderation"
+    MEDICAL_DIAGNOSIS = "medical_diagnosis"
 
 
 @dataclass
@@ -276,11 +277,233 @@ Consider: technical accuracy, security implications, and educational value.
 ]
 
 
+# Medical Diagnosis Scenarios
+MEDICAL_DIAGNOSIS_SCENARIOS = [
+    BenchmarkScenario(
+        name="chest_pain_diagnosis",
+        scenario_type=ScenarioType.MEDICAL_DIAGNOSIS,
+        description="Multi-specialist consultation for chest pain diagnosis",
+        task_prompt="""
+Medical Case Consultation:
+
+Patient: 55-year-old male presenting to emergency department
+Chief Complaint: Severe chest pain for 2 hours
+Vital Signs: BP 150/95, HR 102, RR 22, O2Sat 96% on room air
+Symptoms: 
+- Crushing substernal chest pain radiating to left arm
+- Diaphoresis, nausea
+- Pain started at rest, not relieved by position changes
+- No recent trauma or fever
+
+Diagnostic Tests:
+- ECG: ST elevation in leads II, III, aVF
+- Troponin I: Elevated at 8.5 ng/mL (normal <0.04)
+- Chest X-ray: Clear lung fields, normal heart size
+- Basic metabolic panel: Normal except glucose 180
+
+History:
+- Hypertension, diabetes type 2
+- Former smoker (quit 5 years ago)
+- Family history of heart disease
+- Takes metformin, lisinopril
+
+Consultation Question: What is the most likely diagnosis and recommended immediate treatment?
+
+Options:
+A) STEMI (ST-elevation myocardial infarction) - urgent cardiac catheterization
+B) NSTEMI (Non-ST elevation MI) - medical management, delayed catheterization  
+C) Unstable angina - medical management and monitoring
+D) Aortic dissection - urgent CT angiography
+E) Pulmonary embolism - anticoagulation and CT pulmonary angiogram
+
+Provide your diagnosis vote with detailed medical reasoning.
+        """,
+        expected_outcome="A",  # STEMI with urgent intervention
+        success_criteria={
+            "correctly_identifies_stemi": True,
+            "recommends_urgent_intervention": True,
+            "provides_medical_reasoning": True,
+            "considers_differential_diagnoses": True,
+        },
+        agent_personas=[
+            {"name": "EmergencyPhysician", "role": "Emergency medicine physician with acute care expertise"},
+            {"name": "Cardiologist", "role": "Interventional cardiologist specializing in heart conditions"},
+            {"name": "Internist", "role": "Internal medicine physician with broad diagnostic experience"},
+        ],
+    ),
+    BenchmarkScenario(
+        name="pediatric_fever_assessment",
+        scenario_type=ScenarioType.MEDICAL_DIAGNOSIS,
+        description="Pediatric fever evaluation and management decision",
+        task_prompt="""
+Pediatric Case Consultation:
+
+Patient: 18-month-old female brought by parents
+Chief Complaint: Fever for 3 days, decreased appetite
+Current Status:
+- Temperature: 102.5°F (39.2°C) rectal
+- HR 140, RR 28, alert but fussy
+- No obvious source of infection on examination
+- Eating less, decreased wet diapers
+- No vomiting or diarrhea
+
+Physical Examination:
+- Well-appearing when not crying
+- Clear lungs, no retractions
+- No ear discharge or erythema
+- Throat slightly red but no exudate
+- No rash, no lymphadenopathy
+- Soft abdomen, no organomegaly
+
+Laboratory Results:
+- WBC: 15,000 (elevated)
+- Urinalysis: 2+ leukocyte esterase, 1+ nitrites, 20-50 WBC/hpf
+- Urine culture: Pending (48 hours)
+
+Clinical Question: What is the most appropriate immediate management?
+
+Options:
+A) Discharge home with fever management and close follow-up
+B) Start oral antibiotics for suspected UTI and discharge
+C) Admit for IV antibiotics and monitoring
+D) Perform lumbar puncture to rule out meningitis
+E) Obtain blood cultures and observe for 24 hours
+
+Consider: Age-specific fever protocols, urinalysis findings, and patient stability.
+        """,
+        expected_outcome="B",  # UTI treatment with appropriate monitoring
+        success_criteria={
+            "identifies_likely_uti": True,
+            "chooses_appropriate_antibiotics": True,
+            "considers_age_specific_risks": True,
+            "includes_follow_up_plan": True,
+        },
+        agent_personas=[
+            {"name": "PediatricianER", "role": "Pediatric emergency medicine physician"},
+            {"name": "GeneralPediatrician", "role": "General pediatrician with broad child health experience"},
+            {"name": "PediatricNephrologist", "role": "Pediatric kidney specialist familiar with pediatric UTIs"},
+        ],
+    ),
+    BenchmarkScenario(
+        name="psychiatric_crisis_intervention",
+        scenario_type=ScenarioType.MEDICAL_DIAGNOSIS,
+        description="Psychiatric emergency assessment and safety determination",
+        task_prompt="""
+Psychiatric Emergency Consultation:
+
+Patient: 28-year-old female brought by family
+Chief Complaint: "Threatening to hurt herself" per family
+Presentation:
+- States "I can't take it anymore, I want to end the pain"
+- Reports depression for 6 months after job loss and relationship breakup
+- Stopped taking prescribed sertraline 2 weeks ago
+- Drinking alcohol daily for past month
+- Lives alone, limited social support
+
+Mental Status Examination:
+- Appears depressed, poor eye contact
+- Speech: slow, soft, responds to questions
+- Mood: "hopeless and worthless"
+- Thought process: linear but with hopeless themes
+- Reports passive death wish: "sometimes think I'd be better off dead"
+- Denies active suicidal plan or intent currently
+- No psychosis, no command auditory hallucinations
+- Insight: acknowledges depression, wants help
+
+Risk Factors:
+- Recent major stressors
+- Medication non-compliance
+- Substance use
+- Social isolation
+- Previous depression history
+
+Safety Assessment Question: What is the most appropriate disposition?
+
+Options:
+A) Voluntary psychiatric admission for safety and stabilization
+B) Intensive outpatient program with daily check-ins and medication restart
+C) Discharge home with family supervision and urgent psychiatry follow-up
+D) Involuntary psychiatric hold due to imminent danger
+E) Crisis respite care with peer support and medication management
+
+Consider: Suicide risk assessment, protective factors, and treatment capacity.
+        """,
+        expected_outcome="C",  # Appropriate outpatient management with safety planning
+        success_criteria={
+            "assesses_suicide_risk_appropriately": True,
+            "considers_protective_factors": True,
+            "includes_safety_planning": True,
+            "addresses_medication_compliance": True,
+        },
+        agent_personas=[
+            {"name": "PsychiatristER", "role": "Emergency psychiatrist specializing in crisis intervention"},
+            {"name": "ClinicalPsychologist", "role": "Clinical psychologist expert in suicide risk assessment"},
+            {"name": "SocialWorker", "role": "Psychiatric social worker focused on discharge planning and safety"},
+        ],
+    ),
+    BenchmarkScenario(
+        name="radiological_mass_interpretation",
+        scenario_type=ScenarioType.MEDICAL_DIAGNOSIS,
+        description="Multidisciplinary radiology consultation for suspicious mass",
+        task_prompt="""
+Radiological Case Conference:
+
+Patient: 62-year-old female with 6-month history of persistent cough
+Clinical History:
+- 30 pack-year smoking history (quit 2 years ago)
+- Weight loss of 15 pounds over 4 months
+- Intermittent hemoptysis (coughing up blood)
+- No fever, night sweats, or chest pain
+
+Imaging Findings:
+CT Chest with Contrast:
+- 3.2 cm spiculated mass in right upper lobe
+- Multiple enlarged mediastinal lymph nodes (largest 2.1 cm)
+- No pleural effusion
+- No obvious metastatic disease in chest
+- Liver and adrenals appear normal on current study
+
+PET-CT Results:
+- Hypermetabolic activity in lung mass (SUVmax 8.4)
+- FDG uptake in mediastinal lymph nodes
+- No other areas of abnormal uptake
+
+Previous Imaging:
+- Chest X-ray 8 months ago: reported as "clear"
+
+Clinical Question: What is the most likely diagnosis and recommended next step?
+
+Options:
+A) Primary lung adenocarcinoma - proceed with tissue biopsy and staging
+B) Inflammatory pseudotumor - follow-up imaging in 3 months
+C) Metastatic disease from unknown primary - full body staging
+D) Infectious process (atypical pneumonia) - antibiotic trial
+E) Sarcoidosis with pulmonary involvement - bronchoscopy with biopsy
+
+Consider: Imaging characteristics, clinical presentation, and smoking history.
+        """,
+        expected_outcome="A",  # Primary lung cancer requiring tissue diagnosis
+        success_criteria={
+            "correctly_identifies_malignant_features": True,
+            "recommends_appropriate_biopsy": True,
+            "considers_staging_requirements": True,
+            "integrates_clinical_and_imaging_data": True,
+        },
+        agent_personas=[
+            {"name": "RadiologistThoracic", "role": "Thoracic radiologist specializing in chest imaging"},
+            {"name": "PulmonologistOnc", "role": "Pulmonologist with oncology experience"},
+            {"name": "OncologistThoracic", "role": "Medical oncologist specializing in lung cancer"},
+        ],
+    ),
+]
+
+
 # Combined scenario collections
 ALL_SCENARIOS = {
     ScenarioType.CODE_REVIEW: CODE_REVIEW_SCENARIOS,
     ScenarioType.ARCHITECTURE_DECISION: ARCHITECTURE_SCENARIOS,
     ScenarioType.CONTENT_MODERATION: CONTENT_MODERATION_SCENARIOS,
+    ScenarioType.MEDICAL_DIAGNOSIS: MEDICAL_DIAGNOSIS_SCENARIOS,
 }
 
 

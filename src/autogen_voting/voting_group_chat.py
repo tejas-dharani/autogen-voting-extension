@@ -1,8 +1,5 @@
 import asyncio
-import hashlib
-import hmac
 import logging
-import re
 import secrets
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
@@ -24,6 +21,8 @@ from autogen_agentchat.teams._group_chat._events import GroupChatTermination
 from autogen_core import AgentRuntime, Component, ComponentModel
 from pydantic import BaseModel, Field
 from typing_extensions import Self
+
+from .security import AuditLogger, CryptographicIntegrity, SecurityValidator
 
 TRACE_LOGGER_NAME = "autogen_agentchat.trace"
 
@@ -152,103 +151,6 @@ MAX_PROPOSAL_LENGTH = 10000
 MAX_REASONING_LENGTH = 5000
 MAX_OPTION_LENGTH = 500
 MAX_OPTIONS_COUNT = 20
-ALLOWED_CHARACTERS = re.compile(r'^[\w\s.,!?@#$%^&*()_+\-=\[\]{};:"|<>?~`/\\]*$')
-
-
-class SecurityValidator:
-    """Validates and sanitizes inputs to prevent injection attacks and ensure data integrity."""
-
-    @staticmethod
-    def sanitize_text(text: str, max_length: int) -> str:
-        """Sanitize text input to prevent injection attacks."""
-        if not text:
-            raise ValueError("Input must be a string")
-
-        # Remove null bytes and control characters
-        text = text.replace("\x00", "").replace("\r", "\n")
-
-        # Limit length
-        if len(text) > max_length:
-            raise ValueError(f"Text exceeds maximum length of {max_length} characters")
-
-        # Check for suspicious patterns
-        if not ALLOWED_CHARACTERS.match(text):
-            raise ValueError("Text contains invalid characters")
-
-        # Basic XSS prevention
-        dangerous_patterns = ["<script", "javascript:", "data:text/html", "vbscript:", "onload="]
-        text_lower = text.lower()
-        for pattern in dangerous_patterns:
-            if pattern in text_lower:
-                raise ValueError(f"Text contains potentially dangerous content: {pattern}")
-
-        return text.strip()
-
-    @staticmethod
-    def validate_agent_name(name: str) -> str:
-        """Validate agent name to prevent impersonation."""
-        if not name:
-            raise ValueError("Agent name must be a string")
-
-        name = name.strip()
-        if not name:
-            raise ValueError("Agent name cannot be empty")
-
-        if len(name) > 100:
-            raise ValueError("Agent name too long")
-
-        # Only allow alphanumeric, underscore, and hyphen
-        if not re.match(r"^[a-zA-Z0-9_-]+$", name):
-            raise ValueError("Agent name contains invalid characters")
-
-        return name
-
-    @staticmethod
-    def generate_proposal_id() -> str:
-        """Generate a secure, unique proposal ID."""
-        return f"proposal_{secrets.token_hex(16)}"
-
-    @staticmethod
-    def create_vote_signature(vote_data: dict[str, Any], agent_key: str) -> str:
-        """Create cryptographic signature for vote integrity."""
-        # Create canonical representation of vote data
-        canonical = f"{vote_data['vote']}:{vote_data['proposal_id']}:{vote_data.get('reasoning', '')}"
-
-        # Create HMAC signature
-        signature = hmac.new(agent_key.encode("utf-8"), canonical.encode("utf-8"), hashlib.sha256).hexdigest()
-
-        return signature
-
-    @staticmethod
-    def verify_vote_signature(vote_data: dict[str, Any], agent_key: str, signature: str) -> bool:
-        """Verify vote signature for integrity checking."""
-        expected_signature = SecurityValidator.create_vote_signature(vote_data, agent_key)
-        return hmac.compare_digest(expected_signature, signature)
-
-
-class AuditLogger:
-    """Handles secure audit logging for voting actions."""
-
-    def __init__(self) -> None:
-        self.audit_logger = logging.getLogger("autogen_voting.audit")
-
-    def log_proposal_created(self, proposal_id: str, proposer: str, title: str) -> None:
-        """Log proposal creation."""
-        self.audit_logger.info(f"PROPOSAL_CREATED: id={proposal_id}, proposer={proposer}, title='{title[:100]}'")
-
-    def log_vote_cast(self, proposal_id: str, voter: str, vote: str, has_signature: bool) -> None:
-        """Log vote casting."""
-        self.audit_logger.info(f"VOTE_CAST: proposal={proposal_id}, voter={voter}, vote={vote}, signed={has_signature}")
-
-    def log_voting_result(self, proposal_id: str, result: str, participation_rate: float) -> None:
-        """Log voting results."""
-        self.audit_logger.info(
-            f"VOTING_COMPLETE: proposal={proposal_id}, result={result}, participation={participation_rate:.2%}"
-        )
-
-    def log_security_violation(self, violation_type: str, details: str) -> None:
-        """Log security violations."""
-        self.audit_logger.warning(f"SECURITY_VIOLATION: type={violation_type}, details='{details}'")
 
 
 class VoteContent(BaseModel):
@@ -423,7 +325,8 @@ class VotingGroupChatManager(BaseGroupChatManager):
 
         # Security features
         self._agent_keys: dict[str, str] = {}  # Agent name -> secret key for authentication
-        self._audit_logger = AuditLogger()
+        self._audit_logger: AuditLogger = AuditLogger()
+        self._crypto_integrity = CryptographicIntegrity()
         self._vote_nonces: set[str] = set()  # Prevent replay attacks
         self._byzantine_detector = ByzantineFaultDetector(len(participant_names))
 
@@ -431,6 +334,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
         for name in participant_names:
             validated_name = SecurityValidator.validate_agent_name(name)
             self._agent_keys[validated_name] = secrets.token_hex(32)
+            self._crypto_integrity.register_agent(validated_name)
             self._byzantine_detector.initialize_agent_reputation(validated_name)
 
         # Metrics collection
