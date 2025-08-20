@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**VotingAI: Democratic Multi-Agent Systems ** - A research-grade academic framework that enables **democratic consensus** in multi-agent systems through configurable voting mechanisms with **enterprise security**, **fairness guarantees**, and **statistical rigor**. Perfect for code reviews, architecture decisions, content moderation, medical diagnosis, and safety-critical scenarios requiring transparent group decision-making.
+**VotingAI: Democratic Multi-Agent Systems** - A research-grade academic framework that enables **democratic consensus** in multi-agent systems through configurable voting mechanisms with **enterprise security**, **fairness guarantees**, and **statistical rigor**. Perfect for code reviews, architecture decisions, content moderation, medical diagnosis, and safety-critical scenarios requiring transparent group decision-making.
 
 ## ✨ Research-Grade Features
 
