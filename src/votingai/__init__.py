@@ -1,4 +1,4 @@
-"""VotingAI - Democratic Multi-Agent Systems Built on AutoGen."""
+"""VotingAI - Democratic Multi-Agent Systems"""
 
 from .voting_group_chat import VoteType, VotingGroupChat, VotingMethod, VotingPhase
 

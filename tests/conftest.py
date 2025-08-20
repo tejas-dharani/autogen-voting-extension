@@ -1,4 +1,4 @@
-"""Pytest configuration and fixtures for autogen-voting tests."""
+"""Pytest configuration and fixtures for voting ai tests."""
 
 from unittest.mock import AsyncMock, MagicMock
 

@@ -24,7 +24,7 @@ from typing_extensions import Self
 
 from .security import AuditLogger, CryptographicIntegrity, SecurityValidator
 
-TRACE_LOGGER_NAME = "autogen_agentchat.trace"
+TRACE_LOGGER_NAME = "votingai.trace"
 
 # Set up logging for this module
 logger = logging.getLogger(__name__)

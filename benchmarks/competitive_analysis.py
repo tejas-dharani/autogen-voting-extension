@@ -188,8 +188,8 @@ class CompetitiveAnalyzer:
                 monitoring_capabilities=2,
                 integration_ease=6,
             ),
-            "autogen_standard": FrameworkMetrics(
-                name="AutoGen Standard",
+            "standard": FrameworkMetrics(
+                name="Standard",
                 version="0.4.0",
                 avg_latency=1.53,  # 80% slower
                 p95_latency=2.8,
@@ -530,7 +530,7 @@ class CompetitiveAnalyzer:
         axes[0, 0].set_xticks(range(len(display_names)))
         axes[0, 0].set_xticklabels([name.replace(" ", "\n") for name in display_names], rotation=0, fontsize=8)
 
-        # Highlight AutoGen Voting
+        # Highlight Voting AI
         for i, name in enumerate(framework_names):
             if name == "votingai":
                 bars[i].set_color("#2ca02c")
@@ -538,13 +538,13 @@ class CompetitiveAnalyzer:
 
         # 2. Performance Metrics Radar
         performance_metrics = ["avg_latency", "throughput", "consensus_quality", "fault_tolerance"]
-        autogen_values: List[float] = []
+        votingai_values: List[float] = []
         competitor_avg: List[float] = []
 
         for metric in performance_metrics:
-            autogen_val = getattr(self.frameworks["votingai"], metric)
+            votingai_val = getattr(self.frameworks["votingai"], metric)
             if metric == "avg_latency":
-                autogen_val = 1 / autogen_val  # Invert for radar (higher is better)
+                votingai_val = 1 / votingai_val  # Invert for radar (higher is better)
                 competitor_vals = [
                     1 / getattr(self.frameworks[name], metric) for name in framework_names if name != "votingai"
                 ]
@@ -553,22 +553,22 @@ class CompetitiveAnalyzer:
                     getattr(self.frameworks[name], metric) for name in framework_names if name != "votingai"
                 ]
 
-            autogen_values.append(autogen_val)
+            votingai_values.append(votingai_val)
             competitor_avg.append(statistics.mean(competitor_vals))
 
         # Normalize values for radar chart
-        max_vals = [max(av, ca) for av, ca in zip(autogen_values, competitor_avg, strict=True)]
-        autogen_norm = [av / mv for av, mv in zip(autogen_values, max_vals, strict=True)]
+        max_vals = [max(av, ca) for av, ca in zip(votingai_values, competitor_avg, strict=True)]
+        votingai_norm = [av / mv for av, mv in zip(votingai_values, max_vals, strict=True)]
         competitor_norm = [ca / mv for ca, mv in zip(competitor_avg, max_vals, strict=True)]
 
         angles = np.linspace(0, 2 * np.pi, len(performance_metrics), endpoint=False)
         angles = np.concatenate((angles, [angles[0]]))  # Complete the circle
 
-        autogen_norm.append(autogen_norm[0])
+        votingai_norm.append(votingai_norm[0])
         competitor_norm.append(competitor_norm[0])
 
-        axes[0, 1].plot(angles, autogen_norm, "o-", linewidth=2, label="AutoGen Voting", color="#2ca02c")
-        axes[0, 1].fill(angles, autogen_norm, alpha=0.25, color="#2ca02c")
+        axes[0, 1].plot(angles, votingai_norm, "o-", linewidth=2, label="VotingAI", color="#2ca02c")
+        axes[0, 1].fill(angles, votingai_norm, alpha=0.25, color="#2ca02c")
         axes[0, 1].plot(angles, competitor_norm, "o-", linewidth=2, label="Competitors Avg", color="#ff7f0e")
         axes[0, 1].fill(angles, competitor_norm, alpha=0.25, color="#ff7f0e")
 
@@ -727,27 +727,27 @@ class CompetitiveAnalyzer:
             insights.append("VotingAI emerges as the clear market leader")
 
             # Find specific advantages
-            autogen_scores = scores["votingai"]
-            for category, score in autogen_scores.items():
+            votingai_scores = scores["votingai"]
+            for category, score in votingai_scores.items():
                 if category != "total_score" and isinstance(score, (int, float)) and score > 0.8:
-                    insights.append(f"AutoGen Voting excels in {category.replace('_', ' ')} ({score:.1%})")
+                    insights.append(f"VotingAI excels in {category.replace('_', ' ')} ({score:.1%})")
 
         # Performance insights
         fastest_framework = min(self.frameworks.items(), key=lambda x: x[1].avg_latency)
         if fastest_framework[0] == "votingai":
-            insights.append("AutoGen Voting achieves competitive performance while maintaining high quality")
+            insights.append("VotingAI achieves competitive performance while maintaining high quality")
 
         # Quality insights
         highest_quality = max(self.frameworks.items(), key=lambda x: x[1].consensus_quality)
         if highest_quality[0] == "votingai":
             insights.append(
-                f"AutoGen Voting delivers superior consensus quality ({highest_quality[1].consensus_quality:.1%})"
+                f"VotingAI delivers superior consensus quality ({highest_quality[1].consensus_quality:.1%})"
             )
 
         # Security insights
         most_secure = max(self.frameworks.items(), key=lambda x: x[1].security_features)
         if most_secure[0] == "votingai":
-            insights.append("AutoGen Voting provides enterprise-grade security features")
+            insights.append("VotingAI provides enterprise-grade security features")
 
         return insights
 

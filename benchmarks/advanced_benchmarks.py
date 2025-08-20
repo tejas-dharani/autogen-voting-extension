@@ -448,7 +448,7 @@ class AdvancedBenchmarkSuite:
             scalability["avg_execution_times"],
             marker="o",
             linewidth=2,
-            label="AutoGen Voting",
+            label="VotingAI",
         )
         axes[2, 0].set_xlabel("Number of Agents")
         axes[2, 0].set_ylabel("Execution Time (s)")

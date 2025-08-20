@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "votingai"
 version = "1.0.2"
-description = "VotingAI: Democratic Multi-Agent Systems Built on AutoGen"
+description = "VotingAI: Democratic Multi-Agent Systems"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -86,7 +86,7 @@ test.cmd = "pytest -n auto --cov=src --cov-report=term-missing --cov-report=xml 
 security.help = "Run security checks"
 security.cmd = "bandit -r src tests --skip B101"
 
-check.help = "Run all code quality checks (matches AutoGen's poe check)"
+check.help = "Run all code quality checks"
 check.sequence = [
     "fmt",
     "lint-ci", 

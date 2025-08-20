@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-07-28
 
 ### Added
-- **VotingGroupChat** - Democratic consensus system for AutoGen multi-agent teams
+- **VotingGroupChat** - Democratic consensus system for multi-agent teams
 - **Multiple Voting Methods**:
   - Majority voting (>50% approval)
   - Plurality voting (most votes wins)
@@ -78,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### v0.1.0 - Initial Release
 
-This is the initial release of VotingAI, providing democratic consensus capabilities for Microsoft AutoGen multi-agent systems. The extension has been designed as a standalone package following Microsoft's recommendation for community extensions.
+This is the initial release of VotingAI, providing democratic consensus capabilities for multi-agent systems.
 
 **Key Features:**
 - 🗳️ Five different voting methods for various decision-making scenarios
