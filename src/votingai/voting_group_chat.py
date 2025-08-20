@@ -293,6 +293,8 @@ class VotingGroupChatManager(BaseGroupChatManager):
         auto_propose_speaker: str | None,
         emit_team_events: bool,
         metrics_collector: Any = None,  # Add metrics collector parameter
+        enable_audit_logging: bool = True,
+        enable_file_logging: bool = False,
     ) -> None:
         super().__init__(
             name,
@@ -325,7 +327,10 @@ class VotingGroupChatManager(BaseGroupChatManager):
 
         # Security features
         self._agent_keys: dict[str, str] = {}  # Agent name -> secret key for authentication
-        self._audit_logger: AuditLogger = AuditLogger()
+        if enable_audit_logging:
+            self._audit_logger: AuditLogger | None = AuditLogger(enable_file_logging=enable_file_logging)
+        else:
+            self._audit_logger = None
         self._crypto_integrity = CryptographicIntegrity()
         self._vote_nonces: set[str] = set()  # Prevent replay attacks
         self._byzantine_detector = ByzantineFaultDetector(len(participant_names))
@@ -354,6 +359,26 @@ class VotingGroupChatManager(BaseGroupChatManager):
             message_factory.register(VotingResultMessage)
         except ValueError:
             pass  # Already registered
+
+    def _log_security_violation(self, violation_type: str, details: str) -> None:
+        """Helper method to log security violations if audit logging is enabled."""
+        if self._audit_logger:
+            self._audit_logger.log_security_violation(violation_type, details)
+
+    def _log_proposal_created(self, proposal_id: str, agent_name: str, title: str) -> None:
+        """Helper method to log proposal creation if audit logging is enabled."""
+        if self._audit_logger:
+            self._audit_logger.log_proposal_created(proposal_id, agent_name, title)
+
+    def _log_vote_cast(self, proposal_id: str, agent_name: str, vote: str, is_valid: bool) -> None:
+        """Helper method to log vote casting if audit logging is enabled."""
+        if self._audit_logger:
+            self._audit_logger.log_vote_cast(proposal_id, agent_name, vote, is_valid)
+
+    def _log_voting_result(self, proposal_id: str, result: str, participation_rate: float) -> None:
+        """Helper method to log voting result if audit logging is enabled."""
+        if self._audit_logger:
+            self._audit_logger.log_voting_result(proposal_id, result, participation_rate)
 
     # Public properties for testing and inspection
     @property
@@ -439,7 +464,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
             validated_name = SecurityValidator.validate_agent_name(agent_name)
             return validated_name in self._agent_keys
         except ValueError as e:
-            self._audit_logger.log_security_violation("INVALID_AGENT_NAME", str(e))
+            self._log_security_violation("INVALID_AGENT_NAME", str(e))
             return False
 
     def validate_vote_integrity(self, vote_message: VoteMessage) -> bool:
@@ -459,20 +484,20 @@ class VotingGroupChatManager(BaseGroupChatManager):
 
                 agent_key = self._agent_keys[voter_name]
                 if not SecurityValidator.verify_vote_signature(vote_data, agent_key, vote_message.content.signature):
-                    self._audit_logger.log_security_violation("INVALID_VOTE_SIGNATURE", f"voter={voter_name}")
+                    self._log_security_violation("INVALID_VOTE_SIGNATURE", f"voter={voter_name}")
                     return False
 
             # Check for replay attacks using nonce
             if vote_message.content.timestamp:
                 nonce = f"{voter_name}:{vote_message.content.proposal_id}:{vote_message.content.timestamp}"
                 if nonce in self._vote_nonces:
-                    self._audit_logger.log_security_violation("REPLAY_ATTACK", f"nonce={nonce}")
+                    self._log_security_violation("REPLAY_ATTACK", f"nonce={nonce}")
                     return False
                 self._vote_nonces.add(nonce)
 
             return True
         except Exception as e:
-            self._audit_logger.log_security_violation("VOTE_VALIDATION_ERROR", str(e))
+            self._log_security_violation("VOTE_VALIDATION_ERROR", str(e))
             return False
 
     def validate_proposal_integrity(self, proposal_message: ProposalMessage) -> bool:
@@ -485,7 +510,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
             # Additional proposal-specific validation could go here
             return True
         except Exception as e:
-            self._audit_logger.log_security_violation("PROPOSAL_VALIDATION_ERROR", str(e))
+            self._log_security_violation("PROPOSAL_VALIDATION_ERROR", str(e))
             return False
 
     async def validate_group_state(self, messages: list[BaseChatMessage] | None) -> None:
@@ -524,7 +549,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
 
             # Validate message source
             if message_source != "user" and not self.authenticate_agent(message_source):
-                self._audit_logger.log_security_violation("UNAUTHENTICATED_MESSAGE", f"source={message_source}")
+                self._log_security_violation("UNAUTHENTICATED_MESSAGE", f"source={message_source}")
                 # Return current phase appropriate speakers as fallback
                 return self._get_fallback_speakers()
 
@@ -561,7 +586,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
                     logger.debug(f"SELECT_SPEAKER - Consensus phase result: {result}")
                     return result
             except Exception as phase_error:
-                self._audit_logger.log_security_violation(
+                self._log_security_violation(
                     "PHASE_HANDLING_ERROR", f"phase={self._current_phase.value}, error={str(phase_error)}"
                 )
                 logger.error(f"SELECT_SPEAKER - Phase handling failed: {phase_error}")
@@ -569,7 +594,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
 
         except Exception as e:
             # Critical error recovery
-            self._audit_logger.log_security_violation("CRITICAL_SELECT_SPEAKER_ERROR", str(e))
+            self._log_security_violation("CRITICAL_SELECT_SPEAKER_ERROR", str(e))
             logger.critical(f"SELECT_SPEAKER - {e}")
             return self._get_fallback_speakers()
 
@@ -608,7 +633,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
             # Validate proposal integrity and authenticity
             if not self.validate_proposal_integrity(last_message):
                 logger.debug("PROPOSAL_PHASE - Proposal validation failed")
-                self._audit_logger.log_security_violation("INVALID_PROPOSAL", f"proposer={last_message.source}")
+                self._log_security_violation("INVALID_PROPOSAL", f"proposer={last_message.source}")
                 return [self._select_proposer()]  # Request new proposal
 
             logger.debug("PROPOSAL_PHASE - Proposal validated, transitioning to voting")
@@ -624,7 +649,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
             logger.debug(f"PROPOSAL_PHASE - Set proposal: {self._current_proposal['title']}")
 
             # Log proposal creation
-            self._audit_logger.log_proposal_created(
+            self._log_proposal_created(
                 last_message.content.proposal_id, last_message.source, last_message.content.title
             )
 
@@ -694,7 +719,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
                 logger.debug(f"VOTING_PHASE - Recorded vote: {voter_name} -> {last_message.content.vote}")
 
                 # Log vote casting
-                self._audit_logger.log_vote_cast(
+                self._log_vote_cast(
                     last_message.content.proposal_id,
                     voter_name,
                     last_message.content.vote.value,
@@ -819,7 +844,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
         logger.debug("PROCESS_RESULTS - Created result message")
 
         # Log voting result
-        self._audit_logger.log_voting_result(result["proposal_id"], result["result"], result["participation_rate"])
+        self._log_voting_result(result["proposal_id"], result["result"], result["participation_rate"])
 
         await self.update_message_thread([result_message])
         logger.debug("PROCESS_RESULTS - Updated message thread")
@@ -849,12 +874,10 @@ class VotingGroupChatManager(BaseGroupChatManager):
             for agent_name in self._votes_cast.keys():
                 try:
                     if self._byzantine_detector.detect_byzantine_behavior(agent_name):
-                        self._audit_logger.log_security_violation("BYZANTINE_BEHAVIOR_DETECTED", f"agent={agent_name}")
+                        self._log_security_violation("BYZANTINE_BEHAVIOR_DETECTED", f"agent={agent_name}")
                         suspicious_detected.append(agent_name)
                 except Exception as e:
-                    self._audit_logger.log_security_violation(
-                        "BYZANTINE_DETECTION_ERROR", f"agent={agent_name}, error={str(e)}"
-                    )
+                    self._log_security_violation("BYZANTINE_DETECTION_ERROR", f"agent={agent_name}, error={str(e)}")
 
             # Get both regular and weighted vote counts with error handling
             vote_counts: Counter[str] = Counter[str]()
@@ -864,7 +887,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
                 vote_counts = Counter[str](vote_data["vote"].value for vote_data in self._votes_cast.values())
                 weighted_counts = self._byzantine_detector.get_weighted_vote_count(self._votes_cast)
             except Exception as e:
-                self._audit_logger.log_security_violation("VOTE_COUNT_ERROR", str(e))
+                self._log_security_violation("VOTE_COUNT_ERROR", str(e))
                 # Fallback to simple counting - use default values initialized above
                 for vote_data in self._votes_cast.values():
                     try:
@@ -874,7 +897,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
                         vote_counts[vote_value] += 1
                         weighted_counts[vote_value] += 1.0
                     except Exception as ex:
-                        self._audit_logger.log_security_violation("VOTE_VALUE_ERROR", str(ex))
+                        self._log_security_violation("VOTE_VALUE_ERROR", str(ex))
                         # Continue processing other votes
 
             total_votes = len(self._votes_cast)
@@ -894,7 +917,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
             try:
                 is_resilient = self._byzantine_detector.is_byzantine_resilient(self._votes_cast)
             except Exception as e:
-                self._audit_logger.log_security_violation("BYZANTINE_RESILIENCE_CHECK_ERROR", str(e))
+                self._log_security_violation("BYZANTINE_RESILIENCE_CHECK_ERROR", str(e))
                 is_resilient = False  # Conservative assumption
 
             # Use weighted votes for calculation if Byzantine threats detected
@@ -960,7 +983,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
                             winning_option = VoteType.REJECT.value
 
             except Exception as e:
-                self._audit_logger.log_security_violation(
+                self._log_security_violation(
                     "VOTING_METHOD_CALCULATION_ERROR", f"method={self._voting_method.value}, error={str(e)}"
                 )
                 result = "no_consensus"  # Safe fallback
@@ -972,11 +995,9 @@ class VotingGroupChatManager(BaseGroupChatManager):
                     try:
                         self._byzantine_detector.update_reputation(agent_name, vote_data["vote"], result)
                     except Exception as e:
-                        self._audit_logger.log_security_violation(
-                            "REPUTATION_UPDATE_ERROR", f"agent={agent_name}, error={str(e)}"
-                        )
+                        self._log_security_violation("REPUTATION_UPDATE_ERROR", f"agent={agent_name}, error={str(e)}")
             except Exception as e:
-                self._audit_logger.log_security_violation("REPUTATION_UPDATE_BATCH_ERROR", str(e))
+                self._log_security_violation("REPUTATION_UPDATE_BATCH_ERROR", str(e))
 
             # Prepare result with error handling
             try:
@@ -998,7 +1019,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
                     "reputation_adjusted": use_weighted,
                 }
             except Exception as e:
-                self._audit_logger.log_security_violation("RESULT_PREPARATION_ERROR", str(e))
+                self._log_security_violation("RESULT_PREPARATION_ERROR", str(e))
                 # Return minimal safe result
                 return {
                     "proposal_id": "error",
@@ -1016,7 +1037,7 @@ class VotingGroupChatManager(BaseGroupChatManager):
 
         except Exception as e:
             # Critical error fallback
-            self._audit_logger.log_security_violation("CRITICAL_CALCULATION_ERROR", str(e))
+            self._log_security_violation("CRITICAL_CALCULATION_ERROR", str(e))
             return {
                 "proposal_id": "critical_error",
                 "result": "no_consensus",
@@ -1336,6 +1357,8 @@ class VotingGroupChat(BaseGroupChat, Component[VotingGroupChatConfig]):
         runtime: AgentRuntime | None = None,
         custom_message_types: list[type[BaseAgentEvent | BaseChatMessage]] | None = None,
         emit_team_events: bool = False,
+        enable_audit_logging: bool = True,
+        enable_file_logging: bool = False,
     ) -> None:
         # Validate participants
         if len(participants) < 2:

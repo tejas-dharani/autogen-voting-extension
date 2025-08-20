@@ -42,13 +42,10 @@ class SecurityValidator:
         if len(text) > cls.MAX_PROPOSAL_LENGTH:
             raise ValueError(f"Proposal text too long (max {cls.MAX_PROPOSAL_LENGTH})")
 
-        # Basic XSS prevention
-        if not cls.SAFE_TEXT_PATTERN.match(text):
-            # Remove potentially dangerous characters
-            sanitized = re.sub(r'[<>"\'&]', "", text)
-            return sanitized
-
-        return text
+        # Basic XSS prevention and remove null bytes
+        # Remove null bytes and other dangerous characters
+        sanitized = re.sub(r'[\x00<>"\'&]', "", text)
+        return sanitized
 
     @classmethod
     def validate_vote_reasoning(cls, reasoning: str) -> str:
@@ -57,8 +54,8 @@ class SecurityValidator:
         if len(reasoning) > cls.MAX_REASONING_LENGTH:
             raise ValueError(f"Vote reasoning too long (max {cls.MAX_REASONING_LENGTH})")
 
-        # Basic XSS prevention
-        sanitized = re.sub(r'[<>"\'&]', "", reasoning)
+        # Basic XSS prevention and remove null bytes
+        sanitized = re.sub(r'[\x00<>"\'&]', "", reasoning)
         return sanitized
 
     @classmethod
@@ -160,24 +157,30 @@ class CryptographicIntegrity:
 class AuditLogger:
     """Comprehensive audit logging for voting transparency and compliance."""
 
-    def __init__(self, log_file: Optional[str] = None):
-        """Initialize audit logger with optional log file."""
-        if log_file:
-            self.log_file = Path(log_file)
-        else:
-            # Default log file with timestamp
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            self.log_file = Path(f"audit_log_{timestamp}.json")
+    def __init__(self, log_file: Optional[str] = None, enable_file_logging: bool = False):
+        """Initialize audit logger with optional file logging."""
+        self.enable_file_logging = enable_file_logging
+        self.log_file: Optional[Path] = None
 
-        self.log_file.parent.mkdir(parents=True, exist_ok=True)
+        if enable_file_logging:
+            if log_file:
+                self.log_file = Path(log_file)
+            else:
+                # Default log file with timestamp
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                self.log_file = Path(f"audit_log_{timestamp}.json")
 
-        # Initialize log structure
+            self.log_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # Initialize log structure (in-memory by default)
         self.audit_entries: List[Dict[str, Any]] = []
-        self._load_existing_log()
+
+        if self.enable_file_logging:
+            self._load_existing_log()
 
     def _load_existing_log(self) -> None:
         """Load existing audit log if it exists."""
-        if self.log_file.exists():
+        if self.log_file and self.log_file.exists():
             try:
                 with open(self.log_file, "r") as f:
                     data = json.load(f)
@@ -189,6 +192,9 @@ class AuditLogger:
 
     def _save_log(self) -> None:
         """Save audit log to file."""
+        if not self.enable_file_logging or not self.log_file:
+            return
+
         log_data = {
             "audit_metadata": {
                 "log_version": "1.0",
