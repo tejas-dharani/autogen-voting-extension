@@ -10,6 +10,34 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 
 
+class SecurityConstants:
+    """Security-related constants and configuration values."""
+    
+    # Cryptographic settings
+    NONCE_LENGTH = 16
+    SALT_LENGTH = 16
+    SIGNATURE_LENGTH = 64
+    
+    # Input validation limits
+    MAX_PROPOSAL_LENGTH = 10000
+    MAX_REASONING_LENGTH = 5000
+    MAX_AGENT_NAME_LENGTH = 50
+    MAX_VOTE_OPTIONS = 20
+    
+    # Security timeouts (seconds)
+    VOTE_TIMEOUT = 300
+    PROPOSAL_TIMEOUT = 3600
+    SESSION_TIMEOUT = 7200
+    
+    # Byzantine fault tolerance
+    MIN_HONEST_NODES = 3
+    MAX_BYZANTINE_RATIO = 0.33
+    
+    # Audit settings
+    AUDIT_RETENTION_DAYS = 365
+    MAX_AUDIT_ENTRIES = 100000
+
+
 class SecurityValidator:
     """Validates and sanitizes inputs to prevent security vulnerabilities."""
 
