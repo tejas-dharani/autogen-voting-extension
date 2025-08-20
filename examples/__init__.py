@@ -1,1 +1,1 @@
-"""Examples for AutoGen Voting Extension."""
+"""Examples for VotingAI."""

@@ -1,4 +1,4 @@
-"""Advanced benchmarking suite for AutoGen Voting Extension.
+"""Advanced benchmarking suite for VotingAI.
 
 This module provides a comprehensive benchmarking framework for evaluating
 multi-agent orchestration performance.
@@ -406,7 +406,7 @@ class AdvancedBenchmarkSuite:
 
         # Create comprehensive visualizations
         fig, axes = plt.subplots(3, 2, figsize=(20, 15))
-        fig.suptitle("AutoGen Voting Extension - Comprehensive Benchmark Report", fontsize=16)
+        fig.suptitle("VotingAI - Comprehensive Benchmark Report", fontsize=16)
 
         # Performance comparison
         performance_data = []
@@ -485,7 +485,7 @@ async def main():
     await benchmark_suite.generate_visualization_report(latest_results)
 
     print("\n🎉 Advanced benchmarking complete!")
-    print("AutoGen Voting Extension performance analysis:")
+    print("VotingAI performance analysis:")
 
     summary = results["summary_statistics"]
     if "votingai" in summary:

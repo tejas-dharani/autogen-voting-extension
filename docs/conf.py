@@ -8,7 +8,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Project information
-project = "AutoGen Voting Extension"
+project = "VotingAI"
 copyright = "2025, Tejas Dharani"
 author = "Tejas Dharani"
 release = "0.1.0"
@@ -115,7 +115,7 @@ latex_documents = [
     (
         "index",
         "votingai.tex",
-        "AutoGen Voting Extension Documentation",
+        "VotingAI Documentation",
         "Tejas Dharani",
         "manual",
     ),
@@ -126,7 +126,7 @@ man_pages = [
     (
         "index",
         "votingai",
-        "AutoGen Voting Extension Documentation",
+        "VotingAI Documentation",
         [author],
         1,
     )
@@ -137,7 +137,7 @@ texinfo_documents = [
     (
         "index",
         "votingai",
-        "AutoGen Voting Extension Documentation",
+        "VotingAI Documentation",
         author,
         "votingai",
         "Democratic consensus for Microsoft AutoGen multi-agent systems.",

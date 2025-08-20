@@ -253,7 +253,7 @@ async def run_scalability_test() -> None:
 def main() -> None:
     """Main entry point for benchmark runner."""
     parser = ArgumentParser(
-        description="Run AutoGen Voting Extension benchmarks",
+        description="Run VotingAI benchmarks",
         formatter_class=RawDescriptionHelpFormatter,
         epilog="""
 Examples:

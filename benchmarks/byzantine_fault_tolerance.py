@@ -1,4 +1,4 @@
-"""Byzantine Fault Tolerance implementation for AutoGen Voting Extension.
+"""Byzantine Fault Tolerance implementation for VotingAI.
 
 This module implements Byzantine Fault Tolerant consensus algorithms
 to make the voting orchestration resilient against malicious agents.
@@ -575,7 +575,7 @@ class ByzantineBenchmarkSuite:
 
         report.append("")
         report.append("## Competitive Advantage")
-        report.append("AutoGen Voting Extension with Byzantine Fault Tolerance provides:")
+        report.append("VotingAI with Byzantine Fault Tolerance provides:")
         report.append("- **Superior Security**: Handles 40% Byzantine agents vs 33% classical limit")
         report.append("- **Advanced Detection**: ML-based Byzantine agent identification")
         report.append("- **Adaptive Consensus**: Dynamic threshold adjustment based on threat level")

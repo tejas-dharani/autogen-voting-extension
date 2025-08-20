@@ -325,7 +325,7 @@ class BenchmarkAnalyzer:
             return ""
 
         report: list[str] = []
-        report.append("# AutoGen Voting Extension Benchmark Report")
+        report.append("# VotingAI Benchmark Report")
         report.append(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         report.append(f"Total Comparisons: {len(results)}")
         report.append("")

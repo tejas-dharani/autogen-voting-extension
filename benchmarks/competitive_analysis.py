@@ -101,7 +101,7 @@ class CompetitiveAnalyzer:
 
         return {
             "votingai": FrameworkMetrics(
-                name="AutoGen Voting Extension",
+                name="VotingAI",
                 version="0.1.0",
                 avg_latency=0.85,  # Our measured performance
                 p95_latency=1.2,
@@ -313,7 +313,7 @@ class CompetitiveAnalyzer:
         if winner[0] == "votingai":
             advantage = (winner[1]["total_score"] - second_place[1]["total_score"]) * 100 if second_place else 0
             report.append(
-                f"🏆 **AutoGen Voting Extension emerges as the clear leader** with a {advantage:.1f}% advantage over the second-place framework."
+                f"🏆 **VotingAI emerges as the clear leader** with a {advantage:.1f}% advantage over the second-place framework."
             )
             report.append("")
             report.append("**Key Advantages:**")
@@ -469,7 +469,7 @@ class CompetitiveAnalyzer:
 
         if "votingai" in market_leaders:
             report.append(
-                "🎯 **AutoGen Voting Extension is positioned as a market leader** in the multi-agent orchestration space."
+                "🎯 **VotingAI is positioned as a market leader** in the multi-agent orchestration space."
             )
             report.append("")
             report.append("**Competitive Advantages:**")
@@ -488,7 +488,7 @@ class CompetitiveAnalyzer:
         # Recommendations
         report.append("## Strategic Recommendations")
         report.append("")
-        report.append("### For AutoGen Voting Extension")
+        report.append("### For VotingAI")
         report.append(
             "1. **Maintain Leadership**: Continue innovation in consensus algorithms and Byzantine fault tolerance"
         )
@@ -498,7 +498,7 @@ class CompetitiveAnalyzer:
         report.append("")
 
         report.append("### For Organizations Choosing Frameworks")
-        report.append("- **Enterprise Applications**: AutoGen Voting Extension for mission-critical systems")
+        report.append("- **Enterprise Applications**: VotingAI for mission-critical systems")
         report.append("- **Rapid Prototyping**: OpenAI Swarm for quick experiments")
         report.append("- **Complex Workflows**: LangGraph for intricate agent coordination")
         report.append("- **Ease of Use**: CrewAI for teams new to multi-agent systems")
@@ -724,7 +724,7 @@ class CompetitiveAnalyzer:
         # Find market leader
         market_leader = max(scores.items(), key=lambda x: x[1]["total_score"])
         if market_leader[0] == "votingai":
-            insights.append("AutoGen Voting Extension emerges as the clear market leader")
+            insights.append("VotingAI emerges as the clear market leader")
 
             # Find specific advantages
             autogen_scores = scores["votingai"]

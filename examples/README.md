@@ -1,6 +1,6 @@
-# AutoGen Voting Extension Examples
+# VotingAI Examples
 
-This directory contains comprehensive examples demonstrating various use cases for the AutoGen Voting Extension.
+This directory contains comprehensive examples demonstrating various use cases for VotingAI.
 
 ## Prerequisites
 

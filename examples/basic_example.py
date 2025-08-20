@@ -108,7 +108,7 @@ async def content_moderation_example():
 if __name__ == "__main__":
     import asyncio
 
-    print("Running AutoGen Voting Extension examples...")
+    print("Running VotingAI examples...")
     print("Make sure you have set your OpenAI API key in the environment.")
     print("Install dependencies with: pip install autogen-agentchat autogen-ext")
     print("Then install this extension with: pip install -e .")

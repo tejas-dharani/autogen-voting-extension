@@ -1,5 +1,5 @@
-AutoGen Voting Extension Documentation
-======================================
+VotingAI Documentation
+======================
 
 .. image:: https://badge.fury.io/py/votingai.svg
    :target: https://badge.fury.io/py/votingai
