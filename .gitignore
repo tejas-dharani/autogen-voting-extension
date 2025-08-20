@@ -250,3 +250,4 @@ Thumbs.db
 # Benchmark results
 benchmark_results/
 
+audit_logs/

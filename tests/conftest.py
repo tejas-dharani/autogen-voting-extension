@@ -8,7 +8,7 @@ import pytest
 from autogen_agentchat.agents import AssistantAgent
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
-from src.votingai.config import MODEL
+from src.votingai import DEFAULT_MODEL
 
 
 def requires_openai_api_key(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -28,7 +28,7 @@ def requires_openai_api_key(func: Callable[..., Any]) -> Callable[..., Any]:
 def mock_model_client() -> MagicMock:
     """Mock OpenAI model client for testing."""
     mock_client = MagicMock(spec=OpenAIChatCompletionClient)
-    mock_client.model = MODEL
+    mock_client.model = DEFAULT_MODEL
     return mock_client
 
 
