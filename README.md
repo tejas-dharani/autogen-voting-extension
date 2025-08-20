@@ -6,7 +6,6 @@
 
 **VotingAI: Democratic Multi-Agent Systems** - A research-grade academic framework that enables **democratic consensus** in multi-agent systems through configurable voting mechanisms with **enterprise security**, **fairness guarantees**, and **statistical rigor**. Perfect for code reviews, architecture decisions, content moderation, medical diagnosis, and safety-critical scenarios requiring transparent group decision-making.
 
-## ✨ Research-Grade Features
 
 ### 🗳️ Democratic Voting Methods
 - **Majority** - Requires >50% approval

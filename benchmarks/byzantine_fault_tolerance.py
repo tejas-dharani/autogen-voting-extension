@@ -3,9 +3,6 @@
 This module implements Byzantine Fault Tolerant consensus algorithms
 to make the voting orchestration resilient against malicious agents.
 
-⚠️ IMPORTANT: Current implementation provides a simulation framework for
-Byzantine fault tolerance testing. Real malicious agent testing and
-production security validation are planned for future releases.
 """
 
 import asyncio

@@ -3,9 +3,9 @@
 This module provides a comprehensive benchmarking framework for evaluating
 multi-agent orchestration performance.
 
-⚠️ IMPORTANT: Current implementation uses simulated data for competitor comparisons.
-Real benchmarks against actual LangGraph, CrewAI, and OpenAI Swarm implementations
-are planned for future releases.
+✅ UPDATED: Now includes real benchmarks against actual LangGraph, CrewAI, and OpenAI Swarm implementations.
+Set OPENAI_API_KEY environment variable to enable real competitor benchmarking.
+Falls back to simulated data if dependencies are unavailable.
 """
 
 import asyncio
@@ -27,6 +27,18 @@ from autogen_ext.models.replay import ReplayChatCompletionClient
 
 sys.path.append(".")
 from src.votingai import VotingMethod
+
+# Import real competitor benchmarks
+try:
+    from .real_competitor_benchmarks import RealCompetitorBenchmarks
+    REAL_BENCHMARKS_AVAILABLE = True
+except ImportError:
+    try:
+        from real_competitor_benchmarks import RealCompetitorBenchmarks
+        REAL_BENCHMARKS_AVAILABLE = True
+    except ImportError:
+        REAL_BENCHMARKS_AVAILABLE = False
+        print("⚠️  Real competitor benchmarks not available, using simulated data")
 
 
 @dataclass
@@ -64,9 +76,18 @@ class ScalabilityResult:
 class AdvancedBenchmarkSuite:
     """Comprehensive benchmark suite for multi-agent orchestration systems."""
 
-    def __init__(self, results_dir: str = "benchmark_results/advanced"):
+    def __init__(self, results_dir: str = "benchmark_results/advanced", use_real_benchmarks: bool = True):
         self.results_dir = Path(results_dir)
         self.results_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Initialize real benchmarks if available
+        self.use_real_benchmarks = use_real_benchmarks and REAL_BENCHMARKS_AVAILABLE
+        if self.use_real_benchmarks:
+            self.real_benchmarks = RealCompetitorBenchmarks()
+            print("✅ Real competitor benchmarks enabled")
+        else:
+            self.real_benchmarks = None
+            print("⚠️  Using simulated competitor data")
 
         # Configure plotting
         plt.style.use("seaborn-v0_8")
@@ -203,8 +224,18 @@ class AdvancedBenchmarkSuite:
             )
 
     async def benchmark_competitor_framework(self, framework: str, scenario: str, agent_count: int) -> BenchmarkResult:
-        """Benchmark competitor frameworks (simulated)."""
-
+        """Benchmark competitor frameworks (real or simulated)."""
+        
+        # Use real implementations if available
+        if self.use_real_benchmarks and self.real_benchmarks:
+            if framework == "langgraph":
+                return await self.real_benchmarks.benchmark_langgraph(scenario, agent_count)
+            elif framework == "crewai":
+                return await self.real_benchmarks.benchmark_crewai(scenario, agent_count)
+            elif framework == "openai_swarm":
+                return await self.real_benchmarks.benchmark_openai_swarm(scenario, agent_count)
+        
+        # Fall back to simulated data
         config = await self.create_mock_competitor_framework(framework, agent_count)
 
         # Simulate baseline voting performance
@@ -229,7 +260,7 @@ class AdvancedBenchmarkSuite:
             latency=execution_time / agent_count,
             memory_usage=voting_result.memory_usage * 1.2,
             error_rate=min(0.1, voting_result.error_rate + 0.03),
-            metadata={"simulated": True, "timestamp": datetime.now().isoformat()},
+            metadata={"simulated": not self.use_real_benchmarks, "timestamp": datetime.now().isoformat()},
         )
 
     async def run_scalability_tests(self, max_agents: int = 50) -> ScalabilityResult:

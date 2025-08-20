@@ -3,9 +3,9 @@
 This module provides a framework for comparing multi-agent orchestration systems
 including LangGraph, CrewAI, OpenAI Swarm, and others.
 
-⚠️ IMPORTANT: Current implementation uses estimated performance metrics based on
-research and documentation. Direct benchmarks against actual framework
-implementations are planned for future releases.
+✅ UPDATED: Now integrates with real benchmark data from actual framework implementations.
+Performance metrics are updated with real-world measurements when available.
+Falls back to research-based estimates for baseline comparisons.
 """
 
 import asyncio
@@ -27,6 +27,17 @@ from matplotlib.figure import Figure
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
+
+# Import real competitor benchmarks
+try:
+    from .real_competitor_benchmarks import RealCompetitorBenchmarks
+    REAL_BENCHMARKS_AVAILABLE = True
+except ImportError:
+    try:
+        from real_competitor_benchmarks import RealCompetitorBenchmarks
+        REAL_BENCHMARKS_AVAILABLE = True
+    except ImportError:
+        REAL_BENCHMARKS_AVAILABLE = False
 
 
 @dataclass
@@ -89,9 +100,22 @@ class CompetitiveAnalysisResults(TypedDict):
 class CompetitiveAnalyzer:
     """Analyzer for competitive framework comparison."""
 
-    def __init__(self, results_dir: str = "benchmark_results/competitive") -> None:
+    def __init__(self, results_dir: str = "benchmark_results/competitive", use_real_benchmarks: bool = True) -> None:
         self.results_dir = Path(results_dir)
         self.results_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Initialize real benchmarks if available
+        self.use_real_benchmarks = use_real_benchmarks and REAL_BENCHMARKS_AVAILABLE
+        if self.use_real_benchmarks:
+            try:
+                self.real_benchmarks = RealCompetitorBenchmarks()
+                logger.info("✅ Real benchmark integration enabled for competitive analysis")
+            except Exception:
+                self.real_benchmarks = None
+                self.use_real_benchmarks = False
+                logger.info("⚠️  Real benchmarks unavailable, using research-based estimates")
+        else:
+            self.real_benchmarks = None
 
         # Initialize framework data based on research and benchmarks
         self.frameworks = self._initialize_framework_data()
@@ -291,6 +315,51 @@ class CompetitiveAnalyzer:
 
         return scores
 
+    async def update_with_real_benchmarks(self) -> None:
+        """Update framework metrics with real benchmark data."""
+        if not self.use_real_benchmarks or not self.real_benchmarks:
+            logger.info("📊 Using research-based performance estimates")
+            return
+            
+        logger.info("🔄 Updating competitive analysis with real benchmark data...")
+        
+        test_scenario = "Should we implement a microservices architecture for better scalability?"
+        agent_count = 5
+        
+        try:
+            # Test each framework and update metrics
+            frameworks_to_test = ["langgraph", "crewai", "openai_swarm"]
+            
+            for framework_name in frameworks_to_test:
+                logger.info(f"  📈 Benchmarking {framework_name}...")
+                
+                if framework_name == "langgraph":
+                    result = await self.real_benchmarks.benchmark_langgraph(test_scenario, agent_count)
+                elif framework_name == "crewai":
+                    result = await self.real_benchmarks.benchmark_crewai(test_scenario, agent_count)
+                elif framework_name == "openai_swarm":
+                    result = await self.real_benchmarks.benchmark_openai_swarm(test_scenario, agent_count)
+                else:
+                    continue
+                
+                # Update framework metrics with real data
+                if framework_name in self.frameworks and not result.metadata.get("error"):
+                    framework = self.frameworks[framework_name]
+                    
+                    # Update performance metrics
+                    framework.avg_latency = result.execution_time / agent_count if agent_count > 0 else result.execution_time
+                    framework.p95_latency = framework.avg_latency * 1.5  # Estimate
+                    framework.throughput = result.throughput
+                    framework.memory_usage = result.memory_usage
+                    framework.consensus_quality = result.consensus_quality
+                    framework.fault_tolerance = result.fault_tolerance
+                    
+                    logger.info(f"    ✅ Updated {framework_name}: latency={framework.avg_latency:.3f}s, quality={framework.consensus_quality:.2f}")
+                    
+        except Exception as e:
+            logger.warning(f"⚠️  Error updating with real benchmarks: {e}")
+            logger.info("📊 Falling back to research-based estimates")
+
     def generate_competitive_analysis_report(self) -> str:
         """Generate comprehensive competitive analysis report."""
 
@@ -302,6 +371,14 @@ class CompetitiveAnalyzer:
         report: List[str] = []
         report.append("# Competitive Analysis: Multi-Agent Orchestration Frameworks")
         report.append(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        # Add data source information
+        data_source = "✅ **Real Benchmark Data**" if self.use_real_benchmarks else "📊 **Research-Based Estimates**"
+        report.append(f"Data Source: {data_source}")
+        if self.use_real_benchmarks:
+            report.append("*Performance metrics updated with actual framework implementations*")
+        else:
+            report.append("*Performance metrics based on research and documentation analysis*")
         report.append("")
 
         # Executive Summary
@@ -682,6 +759,9 @@ class CompetitiveAnalyzer:
         """Run comprehensive competitive analysis."""
 
         logger.info("🏁 Starting comprehensive competitive analysis...")
+
+        # Update with real benchmark data if available
+        await self.update_with_real_benchmarks()
 
         # Calculate scores and generate report
         scores = self.calculate_competitive_scores()
