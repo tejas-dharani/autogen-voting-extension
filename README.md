@@ -365,3 +365,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Bringing democratic decision-making to multi-agent AI systems** 🤖🗳️
+
+## 📚 Academic Citations & References
+
+When using this system in academic research, please cite:
+
+```bibtex
+@software{votingai,
+  title={VotingAI: Democratic Consensus System for Multi-Agent Teams},
+  author={[]},
+  year={2025},
+  url={https://github.com/tejas-dharani/votingai},
+  note={Enterprise-grade democratic consensus with Byzantine fault tolerance}
+}
+```
+
