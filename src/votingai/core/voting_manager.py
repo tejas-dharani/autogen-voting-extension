@@ -375,7 +375,7 @@ class CoreVotingManager(BaseGroupChatManager):
 
     # ========================================================================================
     # CORE VOTING LOGIC IMPLEMENTATION
-    # Microsoft Research-grade implementation with adaptive consensus and quality controls
+    # Adaptive consensus implementation with quality controls and fault tolerance
     # ========================================================================================
 
     async def select_speaker(

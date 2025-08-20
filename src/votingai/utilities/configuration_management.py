@@ -2,7 +2,7 @@
 Configuration Management
 
 Enhanced configuration system with model settings, logging, and environment management.
-Refactored from config.py with Microsoft Research standards.
+Refactored from config.py with enhanced configuration management.
 """
 
 import os

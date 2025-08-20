@@ -2,7 +2,7 @@
 Structured Deliberation Engine
 
 Manages structured deliberation rounds with convergence tracking and quality assessment.
-Refactored from StructuredDeliberation class with enhanced Microsoft Research standards.
+Refactored from StructuredDeliberation class with enhanced quality standards.
 """
 
 import time

@@ -2,7 +2,7 @@
 Base Voting System Implementation
 
 Core implementation of the democratic voting system for AI agent teams.
-Refactored from voting_group_chat.py following Microsoft Research standards.
+Refactored from voting_group_chat.py with improved architecture and naming.
 """
 
 import asyncio

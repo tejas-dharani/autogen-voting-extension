@@ -1,7 +1,7 @@
 """
 Research and Evaluation Module
 
-Microsoft Research-grade benchmarking, evaluation, and experimental analysis
+Advanced benchmarking, evaluation, and experimental analysis
 components for systematic evaluation of voting systems.
 """
 

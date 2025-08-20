@@ -1,7 +1,7 @@
 """
 Evaluation Metrics Framework
 
-Comprehensive metrics collection and analysis for research-grade evaluation
+Comprehensive metrics collection and analysis for systematic evaluation
 of voting systems performance, quality, and effectiveness.
 """
 

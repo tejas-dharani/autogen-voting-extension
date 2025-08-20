@@ -2,7 +2,7 @@
 Adaptive Consensus Strategies
 
 Intelligent strategy selection based on decision complexity and context analysis.
-Refactored from adaptive_consensus.py with improved Microsoft Research naming conventions.
+Refactored from adaptive_consensus.py with improved naming conventions.
 """
 
 import logging

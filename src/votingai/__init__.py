@@ -1,8 +1,8 @@
 """
-VotingAI - Microsoft Research Grade Democratic Consensus System
+VotingAI - Democratic Consensus System for AI Agent Teams
 
 A comprehensive, production-ready voting system for AI agent teams with
-research-grade enhancements, adaptive consensus mechanisms, and enterprise security.
+advanced enhancements, adaptive consensus mechanisms, and enterprise security.
 
 Refactored Architecture:
 - core: Fundamental voting protocols and base implementations
@@ -115,7 +115,7 @@ from .utilities import (
 
 # Version and metadata
 __version__ = "2.0.0"  # Major version bump for architectural refactoring
-__author__ = "Microsoft Research Standards Implementation"
+__author__ = "VotingAI Development Team"
 __description__ = "Enterprise-grade democratic consensus system for AI agent teams"
 
 # Core exports for most common use cases
@@ -208,7 +208,7 @@ def get_version_info():
     return {
         "version": __version__,
         "description": __description__,
-        "architecture": "Microsoft Research Standards",
+        "architecture": "Modular Enterprise Architecture",
         "components": {
             "core": "Fundamental voting protocols and base implementations",
             "consensus": "Adaptive consensus algorithms and deliberation strategies", 
