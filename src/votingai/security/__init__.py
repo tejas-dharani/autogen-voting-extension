@@ -20,13 +20,8 @@ from .audit_framework import (
     AuditEventType
 )
 
-# Byzantine fault tolerance
-from .byzantine_protection import (
-    ByzantineFaultTolerance,
-    ReputationManager,
-    ThreatDetector,
-    SecurityMetrics
-)
+# Byzantine fault tolerance components moved to core.voting_manager
+# ByzantineFaultDetector is available from core module
 
 __all__ = [
     # Cryptographic services
@@ -38,11 +33,7 @@ __all__ = [
     "AuditLogger",
     "ComplianceReporter",
     "TransparencyManager",
-    "AuditEventType",
+    "AuditEventType"
     
-    # Byzantine protection
-    "ByzantineFaultTolerance",
-    "ReputationManager", 
-    "ThreatDetector",
-    "SecurityMetrics"
+    # Note: ByzantineFaultDetector available from core.voting_manager
 ]

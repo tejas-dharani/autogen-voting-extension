@@ -150,9 +150,8 @@ class VotingSystemConfig:
         }
 
 
-# Legacy compatibility
+# Default model configuration
 DEFAULT_MODEL = "gpt-4o-mini"
-MODEL = DEFAULT_MODEL
 
 # Global configuration instance
 _global_config: Optional[VotingSystemConfig] = None

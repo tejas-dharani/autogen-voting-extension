@@ -14,32 +14,30 @@
 - **Qualified Majority** - Configurable threshold (e.g., 2/3)
 - **Ranked Choice** - Ranked preferences with elimination
 
-### 🔒 Enterprise Security (NEW)
+### 🔒 Enterprise Security
 - **Cryptographic Signatures** - HMAC-based vote integrity verification
 - **Input Validation** - XSS prevention and sanitization
 - **Audit Logging** - Complete transparency and compliance trails
 - **Byzantine Fault Tolerance** - Reputation-based detection and mitigation
 - **Replay Attack Prevention** - Nonce-based security
 
-### ⚖️ Fairness & Ethics (NEW)
-- **Demographic Parity** - Equal treatment across agent groups
-- **Equalized Odds** - Fair outcomes for different agent types
-- **Individual Fairness** - Consistent decisions for similar cases
-- **Bias Detection** - Automated identification of discriminatory patterns
-- **Voice Equality** - Balanced participation across all agents
+### 🧠 Intelligent Consensus
+- **Semantic Interpretation** - Natural language vote understanding
+- **Adaptive Strategies** - Context-aware consensus mechanisms
+- **Deliberation Engine** - Structured discussion and convergence analysis
+- **Smart Orchestration** - Learning-based consensus optimization
 
-### 🛡️ Safety Metrics (NEW)
+### 🛡️ Safety & Quality
 - **Toxicity Detection** - Harmful content identification
 - **Reasoning Quality** - Evidence-based decision validation
 - **Factual Accuracy** - Truth verification in agent responses
 - **Harm Prevention** - Safety-critical decision safeguards
 
-### 📊 Statistical Rigor (NEW)
-- **Bonferroni Correction** - Multiple comparison statistical validity
-- **Effect Sizes** - Cohen's d and Hedge's g calculations
-- **Bootstrap Confidence Intervals** - Robust statistical inference
-- **Power Analysis** - Sample size validation (β = 0.8)
-- **Calibration Metrics** - Expected Calibration Error (ECE)
+### 📊 Research & Evaluation
+- **Comprehensive Benchmarking** - Performance comparison tools
+- **Quality Metrics** - Decision accuracy and consensus satisfaction
+- **Scalability Testing** - Multi-agent performance analysis
+- **Statistical Analysis** - Rigorous evaluation frameworks
 
 ### 🏥 Safety-Critical Applications
 - **Medical Diagnosis** - Multi-specialist consultations with safety guarantees
@@ -79,6 +77,17 @@ cd votingai
 pip install -e ".[dev]"
 ```
 
+## 🏗️ Architecture
+
+VotingAI is built with a modular architecture for enterprise-grade voting systems:
+
+- **`core`** - Fundamental voting protocols and base implementations
+- **`consensus`** - Advanced consensus algorithms and deliberation strategies  
+- **`intelligence`** - Semantic interpretation and natural language processing
+- **`security`** - Cryptographic integrity, audit, and Byzantine fault tolerance
+- **`utilities`** - Configuration management and common utilities
+- **`research`** - Benchmarking, evaluation, and experimental analysis
+
 ## 🎯 Quick Start
 
 ```python
@@ -87,7 +96,7 @@ from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.conditions import MaxMessageTermination
 
-from votingai import VotingGroupChat, VotingMethod
+from votingai import BaseVotingGroupChat, VotingMethod
 
 async def main():
     model_client = OpenAIChatCompletionClient(model="gpt-4o")
@@ -100,7 +109,7 @@ async def main():
     ]
     
     # Create voting team
-    voting_team = VotingGroupChat(
+    voting_team = BaseVotingGroupChat(
         participants=agents,
         voting_method=VotingMethod.MAJORITY,
         require_reasoning=True,
@@ -128,7 +137,7 @@ Perfect for collaborative code reviews with multiple reviewers:
 
 ```python
 # Qualified majority voting for code reviews
-voting_team = VotingGroupChat(
+voting_team = BaseVotingGroupChat(
     participants=[senior_dev, security_expert, performance_engineer],
     voting_method=VotingMethod.QUALIFIED_MAJORITY,
     qualified_majority_threshold=0.67,  # Require 2/3 approval
@@ -151,7 +160,7 @@ Use ranked choice voting for complex architectural decisions:
 
 ```python
 # Ranked choice for architecture decisions
-voting_team = VotingGroupChat(
+voting_team = BaseVotingGroupChat(
     participants=[tech_lead, architect, devops_engineer],
     voting_method=VotingMethod.RANKED_CHOICE,
     max_discussion_rounds=3
@@ -176,7 +185,7 @@ Majority voting for content approval/rejection:
 
 ```python
 # Simple majority for content moderation
-voting_team = VotingGroupChat(
+voting_team = BaseVotingGroupChat(
     participants=[community_manager, safety_specialist, legal_advisor],
     voting_method=VotingMethod.MAJORITY,
     allow_abstentions=True,
@@ -190,7 +199,7 @@ Unanimous consensus for high-stakes decisions:
 
 ```python
 # Unanimous voting for feature prioritization
-voting_team = VotingGroupChat(
+voting_team = BaseVotingGroupChat(
     participants=[product_manager, engineering_lead, ux_designer],
     voting_method=VotingMethod.UNANIMOUS,
     max_discussion_rounds=4
@@ -214,7 +223,7 @@ VotingMethod.RANKED_CHOICE      # Ranked preferences
 ### Advanced Settings
 
 ```python
-VotingGroupChat(
+BaseVotingGroupChat(
     participants=agents,
     voting_method=VotingMethod.QUALIFIED_MAJORITY,
     qualified_majority_threshold=0.75,    # 75% threshold

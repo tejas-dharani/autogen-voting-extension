@@ -21,7 +21,6 @@ from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from ..core import BaseVotingGroupChat, VotingMethod
-from ..system import EnhancedVotingGroupChat, create_adaptive_voting_system
 from ..utilities import VotingSystemConfig
 from .evaluation_metrics import BenchmarkMetrics, ComparisonResults, MetricsCollector
 
@@ -349,40 +348,17 @@ class BenchmarkRunner:
         voting_method: VotingMethod,
         system_type: str,
         scenario: BenchmarkScenario
-    ) -> Union[BaseVotingGroupChat, EnhancedVotingGroupChat]:
+    ) -> BaseVotingGroupChat:
         """Create appropriate voting system based on type."""
         
         termination = MaxMessageTermination(self.config.max_messages)
         
-        if system_type == "base":
-            return BaseVotingGroupChat(
-                participants=agents,
-                voting_method=voting_method,
-                termination_condition=termination
-            )
-        
-        elif system_type == "enhanced":
-            return EnhancedVotingGroupChat(
-                participants=agents,
-                config=VotingSystemConfig(
-                    voting_method=voting_method,
-                    enable_adaptive_consensus=self.config.enable_adaptive_consensus,
-                    enable_semantic_parsing=self.config.enable_semantic_parsing,
-                    enable_learning=self.config.enable_learning
-                ),
-                termination_condition=termination
-            )
-        
-        elif system_type == "adaptive":
-            return create_adaptive_voting_system(
-                participants=agents,
-                complexity_aware=True,
-                semantic_parsing=True,
-                learning_enabled=self.config.enable_learning
-            )
-        
-        else:
-            raise ValueError(f"Unknown system type: {system_type}")
+        # Only base voting system is currently available
+        return BaseVotingGroupChat(
+            participants=agents,
+            voting_method=voting_method,
+            termination_condition=termination
+        )
     
     async def _execute_voting_process(
         self,

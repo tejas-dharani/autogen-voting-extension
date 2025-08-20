@@ -36,23 +36,8 @@ from .core import (
     ByzantineFaultDetector
 )
 
-# Enhanced voting system (production-ready with all features)
-from .system import (
-    # Enhanced framework with adaptive features
-    EnhancedVotingGroupChat,
-    VotingSystemConfiguration,
-    
-    # Factory functions for different use cases
-    create_adaptive_voting_system,
-    create_research_voting_system,
-    create_lightweight_voting_system,
-    create_standard_voting_system,
-    
-    # Advanced management
-    AdvancedVotingManager,
-    EnhancedVotingPhase,
-    SystemMetrics
-)
+# Enhanced voting system components are being refactored
+# Legacy system imports removed
 
 # Consensus algorithms and strategies  
 from .consensus import (
@@ -126,16 +111,7 @@ from .utilities import (
     ErrorCodes
 )
 
-# Backward compatibility exports (legacy names)
-VotingGroupChat = BaseVotingGroupChat
-VotingGroupChatManager = CoreVotingManager
-
-# Legacy adaptive consensus exports
-SmartConsensusEngine = SmartConsensusOrchestrator  # Renamed for clarity
-StructuredDeliberation = StructuredDeliberationEngine  # Renamed for clarity
-
-# Legacy semantic parser export
-SemanticVoteParser = SemanticVoteInterpreter  # Renamed for clarity
+# Core functionality exports
 
 # Version and metadata
 __version__ = "2.0.0"  # Major version bump for architectural refactoring
@@ -166,20 +142,7 @@ __all__ = [
     "ByzantineFaultDetector",
     
     # === ENHANCED VOTING SYSTEM ===
-    # Enhanced framework
-    "EnhancedVotingGroupChat",
-    "VotingSystemConfiguration",
-    
-    # Factory functions
-    "create_adaptive_voting_system",
-    "create_research_voting_system",
-    "create_lightweight_voting_system", 
-    "create_standard_voting_system",
-    
-    # Advanced features
-    "AdvancedVotingManager",
-    "EnhancedVotingPhase",
-    "SystemMetrics",
+    # Enhanced components moved to core - use BaseVotingGroupChat
     
     # === CONSENSUS ALGORITHMS ===
     # Strategy selection
@@ -236,12 +199,7 @@ __all__ = [
     "ProcessingError",
     "ErrorCodes",
     
-    # === BACKWARD COMPATIBILITY ===
-    "VotingGroupChat",          # -> BaseVotingGroupChat
-    "VotingGroupChatManager",   # -> CoreVotingManager
-    "SmartConsensusEngine",     # -> SmartConsensusOrchestrator
-    "StructuredDeliberation",   # -> StructuredDeliberationEngine
-    "SemanticVoteParser",       # -> SemanticVoteInterpreter
+    # === END OF EXPORTS ==="
 ]
 
 
@@ -259,14 +217,7 @@ def get_version_info():
             "security": "Cryptographic integrity and Byzantine fault tolerance",
             "utilities": "Configuration management and common utilities"
         },
-        "compatibility": {
-            "backward_compatible": True,
-            "legacy_exports": [
-                "VotingGroupChat", "VotingGroupChatManager", 
-                "SmartConsensusEngine", "StructuredDeliberation", 
-                "SemanticVoteParser"
-            ]
-        }
+        "development_status": "Active Development"
     }
 
 
@@ -274,10 +225,5 @@ def get_version_info():
 def list_voting_systems():
     """List available voting system configurations."""
     return {
-        "BaseVotingGroupChat": "Core voting system with essential features",
-        "EnhancedVotingGroupChat": "Full-featured system with adaptive consensus",
-        "create_adaptive_voting_system": "Factory for complexity-aware voting",
-        "create_research_voting_system": "Factory for research and evaluation",
-        "create_lightweight_voting_system": "Factory for high-performance scenarios",
-        "create_standard_voting_system": "Factory for backward compatibility"
+        "BaseVotingGroupChat": "Core voting system with essential features"
     }
