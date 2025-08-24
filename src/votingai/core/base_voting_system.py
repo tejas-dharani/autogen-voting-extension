@@ -7,8 +7,8 @@ Refactored from voting_group_chat.py with improved architecture and naming.
 
 import asyncio
 import logging
-from collections.abc import Callable, Mapping, Sequence
-from typing import Any, List, Optional, cast
+from collections.abc import Callable
+from typing import List, Optional, cast
 
 from autogen_agentchat.base import ChatAgent, Team, TerminationCondition
 from autogen_agentchat.messages import (
@@ -16,21 +16,15 @@ from autogen_agentchat.messages import (
     BaseChatMessage,
     MessageFactory,
     StructuredMessage,
-    TextMessage,
 )
-from autogen_agentchat.state import BaseGroupChatManagerState
 from autogen_agentchat.teams import BaseGroupChat
-from autogen_agentchat.teams._group_chat._base_group_chat_manager import BaseGroupChatManager
 from autogen_agentchat.teams._group_chat._events import GroupChatTermination
 from autogen_core import AgentRuntime, Component, ComponentModel
 from pydantic import BaseModel, Field
 from typing_extensions import Self
 
-from .voting_protocols import (
-    VotingMethod, VoteType, VotingPhase, VoteContent, 
-    ProposalContent, VotingResult
-)
-from .voting_manager import CoreVotingManager
+from .voting_manager import RefactoredVotingManager as CoreVotingManager
+from .voting_protocols import ProposalContent, VoteContent, VotingMethod, VotingResult
 
 logger = logging.getLogger(__name__)
 
@@ -101,20 +95,21 @@ class VotingGroupChatConfiguration(BaseModel):
 class BaseVotingGroupChat(BaseGroupChat, Component[VotingGroupChatConfiguration]):
     """
     Base voting group chat implementation for democratic consensus building.
-    
+
     This is a foundational class that provides core voting functionality.
     Enhanced versions with adaptive consensus and semantic parsing are available
     in the system module.
-    
+
     Examples:
         Basic voting for simple decisions:
-        
+
         ```python
         import asyncio
         from autogen_ext.models.openai import OpenAIChatCompletionClient
         from autogen_agentchat.agents import AssistantAgent
         from votingai.core import BaseVotingGroupChat, VotingMethod
         from autogen_agentchat.conditions import MaxMessageTermination
+
 
         async def main():
             model_client = OpenAIChatCompletionClient(model="gpt-4o")
@@ -133,6 +128,7 @@ class BaseVotingGroupChat(BaseGroupChat, Component[VotingGroupChatConfiguration]
 
             result = await voting_chat.run(task="Approve the proposed changes")
             print(result)
+
 
         asyncio.run(main())
         ```

@@ -6,38 +6,36 @@ components for systematic evaluation of voting systems.
 """
 
 # Core evaluation metrics
-from .evaluation_metrics import (
-    QualityMetrics,
-    PerformanceMetrics,
-    ConsensusMetrics,
-    BenchmarkMetrics,
-    MetricsCollector,
-    ComparisonResults
-)
-
 # Advanced evaluation framework
+# Advanced evaluation
 from .advanced_evaluation import (
-    ExperimentType,
-    ExperimentDesign,
+    ConsensusQualityEvaluator,
     ExperimentalCondition,
-    ResearchBenchmarkFramework as ResearchFramework
+    ExperimentDesign,
+    ExperimentType,
+    LearningEffectivenessAnalyzer,
+    ResearchBenchmarkFramework,
+    ScalabilityTester,
+)
+from .advanced_evaluation import (
+    ResearchBenchmarkFramework as ResearchFramework,
 )
 
 # Benchmarking suite
 from .benchmarking_suite import (
+    BenchmarkConfiguration,
     BenchmarkRunner,
     BenchmarkScenario,
+    ResultsAnalyzer,
     ScenarioType,
-    BenchmarkConfiguration,
-    ResultsAnalyzer
 )
-
-# Advanced evaluation
-from .advanced_evaluation import (
-    ResearchBenchmarkFramework,
-    ConsensusQualityEvaluator,
-    LearningEffectivenessAnalyzer,
-    ScalabilityTester
+from .evaluation_metrics import (
+    BenchmarkMetrics,
+    ComparisonResults,
+    ConsensusMetrics,
+    MetricsCollector,
+    PerformanceMetrics,
+    QualityMetrics,
 )
 
 __all__ = [
@@ -48,23 +46,20 @@ __all__ = [
     "BenchmarkMetrics",
     "MetricsCollector",
     "ComparisonResults",
-    
-    # Advanced evaluation framework  
+    # Advanced evaluation framework
     "ExperimentType",
     "ExperimentDesign",
     "ExperimentalCondition",
     "ResearchFramework",
-    
     # Benchmarking suite
     "BenchmarkRunner",
     "BenchmarkScenario",
     "ScenarioType",
     "BenchmarkConfiguration",
     "ResultsAnalyzer",
-    
     # Advanced evaluation
     "ResearchBenchmarkFramework",
     "ConsensusQualityEvaluator",
     "LearningEffectivenessAnalyzer",
-    "ScalabilityTester"
+    "ScalabilityTester",
 ]

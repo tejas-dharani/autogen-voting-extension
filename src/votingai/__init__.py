@@ -6,109 +6,101 @@ advanced enhancements, adaptive consensus mechanisms, and enterprise security.
 
 Refactored Architecture:
 - core: Fundamental voting protocols and base implementations
-- consensus: Advanced adaptive consensus and deliberation algorithms  
+- consensus: Advanced adaptive consensus and deliberation algorithms
 - intelligence: Semantic interpretation and natural language processing
-- system: Enhanced voting frameworks with integrated features
 - security: Cryptographic integrity, audit, and Byzantine fault tolerance
+- research: Benchmarking, evaluation, and advanced testing frameworks
 - utilities: Configuration management and common utilities
 """
 
+from typing import Any, Dict
+
 # Core voting system (foundational components)
-from .core import (
-    # Voting protocols
-    VoteType,
-    VotingMethod, 
-    VotingPhase,
-    VoteContent,
-    ProposalContent,
-    VotingResult,
-    
-    # Base voting system
-    BaseVotingGroupChat,
-    VotingGroupChatConfiguration,
-    VoteMessage,
-    ProposalMessage,
-    VotingResultMessage,
-    
-    # Core manager
-    CoreVotingManager,
-    VotingManagerState,
-    ByzantineFaultDetector
-)
-
-# Enhanced voting system components are being refactored
-# Legacy system imports removed
-
-# Consensus algorithms and strategies  
+# Consensus algorithms and strategies
 from .consensus import (
+    AdaptiveStrategySelector,
+    ComplexityClassifier,
+    ConsensusRecommendation,
+    ConsensusStrategy,
+    ContextualMetrics,
+    ConvergenceAnalyzer,
     # Adaptive consensus strategies
     DecisionComplexity,
-    ConsensusStrategy,
-    AdaptiveStrategySelector,
-    ContextualMetrics,
-    ComplexityClassifier,
-    
-    # Deliberation engine
-    StructuredDeliberationEngine,
     DeliberationRound,
     DeliberationSummary,
-    ConvergenceAnalyzer,
-    
+    LearningFramework,
+    PerformanceInsights,
     # Smart orchestration
     SmartConsensusOrchestrator,
-    ConsensusRecommendation,
-    LearningFramework,
-    PerformanceInsights
+    # Deliberation engine
+    StructuredDeliberationEngine,
+)
+from .core import (
+    # Base voting system
+    BaseVotingGroupChat,
+    # Core manager (Byzantine detector moved to security)
+    CoreVotingManager,
+    ProposalContent,
+    ProposalMessage,
+    VoteContent,
+    VoteMessage,
+    # Voting protocols
+    VoteType,
+    VotingGroupChatConfiguration,
+    VotingManagerState,
+    VotingMethod,
+    VotingPhase,
+    VotingResult,
+    VotingResultMessage,
 )
 
 # Intelligence and semantic understanding
 from .intelligence import (
-    # Semantic interpretation
-    VoteIntention,
     ConfidenceLevel,
-    SemanticVoteResult,
-    SemanticVoteInterpreter,
-    
-    # Natural language processing
-    PatternLibrary,
-    ContextualAnalyzer,
     ContentAnalysisResult,
-    NaturalLanguageProcessor,
-    
-    # Vote understanding
-    VoteUnderstandingEngine,
+    ContextualAnalyzer,
     IntentionClassifier,
     MessageInsightExtractor,
-    ParsingStatistics
+    NaturalLanguageProcessor,
+    ParsingStatistics,
+    # Natural language processing
+    PatternLibrary,
+    SemanticVoteInterpreter,
+    SemanticVoteResult,
+    # Semantic interpretation
+    VoteIntention,
+    # Vote understanding
+    VoteUnderstandingEngine,
 )
 
+# Research and evaluation framework
+# Note: Research components available but not exported by default
 # Security and integrity
 from .security import (
-    # Cryptographic services
-    SecurityValidator,
-    CryptographicIntegrity,
-    
     # Audit framework
     AuditLogger,
-    
-    # Byzantine protection (reexport from core for convenience)
-    # ByzantineFaultDetector - already exported from core
+    # Byzantine fault tolerance (now properly in security module)
+    ByzantineFaultDetector,
+    CryptographicIntegrity,
+    IByzantineDetectionStrategy,
+    ReputationBasedDetectionStrategy,
+    # Cryptographic services
+    SecurityValidator,
 )
 
 # Configuration and utilities
 from .utilities import (
+    DEFAULT_MODEL,
+    ConfigurationError,
+    ErrorCodes,
+    LoggingConfiguration,
+    ModelConfiguration,
+    ProcessingError,
+    SecurityError,
     # Configuration management
     VotingSystemConfig,
-    ModelConfiguration,
-    LoggingConfiguration,
-    DEFAULT_MODEL,
-    
     # Common types and errors
     VotingSystemError,
-    ConfigurationError,
-    SecurityError,
-    ProcessingError,
-    ErrorCodes
 )
 
 # Core functionality exports
@@ -123,27 +115,22 @@ __all__ = [
     # === CORE VOTING SYSTEM ===
     # Protocols and data structures
     "VoteType",
-    "VotingMethod", 
+    "VotingMethod",
     "VotingPhase",
     "VoteContent",
-    "ProposalContent", 
+    "ProposalContent",
     "VotingResult",
-    
     # Base voting implementation
     "BaseVotingGroupChat",
     "VotingGroupChatConfiguration",
     "VoteMessage",
     "ProposalMessage",
     "VotingResultMessage",
-    
     # Core management
     "CoreVotingManager",
     "VotingManagerState",
-    "ByzantineFaultDetector",
-    
     # === ENHANCED VOTING SYSTEM ===
     # Enhanced components moved to core - use BaseVotingGroupChat
-    
     # === CONSENSUS ALGORITHMS ===
     # Strategy selection
     "DecisionComplexity",
@@ -151,59 +138,54 @@ __all__ = [
     "AdaptiveStrategySelector",
     "ContextualMetrics",
     "ComplexityClassifier",
-    
     # Deliberation
     "StructuredDeliberationEngine",
-    "DeliberationRound", 
+    "DeliberationRound",
     "DeliberationSummary",
     "ConvergenceAnalyzer",
-    
     # Orchestration
     "SmartConsensusOrchestrator",
     "ConsensusRecommendation",
     "LearningFramework",
     "PerformanceInsights",
-    
     # === INTELLIGENCE & NLP ===
     # Semantic interpretation
     "VoteIntention",
     "ConfidenceLevel",
     "SemanticVoteResult",
     "SemanticVoteInterpreter",
-    
     # NLP components
     "PatternLibrary",
     "ContextualAnalyzer",
     "ContentAnalysisResult",
     "NaturalLanguageProcessor",
-    
     # Vote understanding
     "VoteUnderstandingEngine",
     "IntentionClassifier",
     "MessageInsightExtractor",
     "ParsingStatistics",
-    
     # === SECURITY & INTEGRITY ===
     "SecurityValidator",
     "CryptographicIntegrity",
     "AuditLogger",
-    
+    "ByzantineFaultDetector",
+    "IByzantineDetectionStrategy",
+    "ReputationBasedDetectionStrategy",
     # === CONFIGURATION & UTILITIES ===
     "VotingSystemConfig",
     "ModelConfiguration",
-    "LoggingConfiguration", 
+    "LoggingConfiguration",
     "DEFAULT_MODEL",
     "VotingSystemError",
     "ConfigurationError",
     "SecurityError",
     "ProcessingError",
     "ErrorCodes",
-    
     # === END OF EXPORTS ==="
 ]
 
 
-def get_version_info():
+def get_version_info() -> Dict[str, Any]:
     """Get detailed version and component information."""
     return {
         "version": __version__,
@@ -211,19 +193,17 @@ def get_version_info():
         "architecture": "Modular Enterprise Architecture",
         "components": {
             "core": "Fundamental voting protocols and base implementations",
-            "consensus": "Adaptive consensus algorithms and deliberation strategies", 
+            "consensus": "Adaptive consensus algorithms and deliberation strategies",
             "intelligence": "Semantic interpretation and natural language processing",
-            "system": "Enhanced voting frameworks with integrated features",
             "security": "Cryptographic integrity and Byzantine fault tolerance",
-            "utilities": "Configuration management and common utilities"
+            "research": "Benchmarking, evaluation, and advanced testing frameworks",
+            "utilities": "Configuration management and common utilities",
         },
-        "development_status": "Active Development"
+        "development_status": "Active Development",
     }
 
 
 # Module-level documentation for discoverability
-def list_voting_systems():
+def list_voting_systems() -> Dict[str, str]:
     """List available voting system configurations."""
-    return {
-        "BaseVotingGroupChat": "Core voting system with essential features"
-    }
+    return {"BaseVotingGroupChat": "Core voting system with essential features"}

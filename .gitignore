@@ -206,7 +206,7 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# Microsoft/Enterprise specific
+
 # Azure DevOps
 .azure/
 .azuredevops/

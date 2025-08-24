@@ -6,45 +6,32 @@ for sophisticated vote interpretation and content analysis.
 """
 
 # Core semantic interpretation
-from .semantic_interpreter import (
-    VoteIntention,
-    ConfidenceLevel,
-    SemanticVoteResult,
-    SemanticVoteInterpreter
-)
-
 # Natural language processing
 from .natural_language_processor import (
-    PatternLibrary,
-    ContextualAnalyzer,
     ContentAnalysisResult,
-    NaturalLanguageProcessor
+    ContextualAnalyzer,
+    NaturalLanguageProcessor,
+    PatternLibrary,
 )
+from .semantic_interpreter import ConfidenceLevel, SemanticVoteInterpreter, SemanticVoteResult, VoteIntention
 
 # Vote understanding and interpretation
-from .vote_understanding import (
-    VoteUnderstandingEngine,
-    IntentionClassifier,
-    MessageInsightExtractor,
-    ParsingStatistics
-)
+from .vote_understanding import IntentionClassifier, MessageInsightExtractor, ParsingStatistics, VoteUnderstandingEngine
 
 __all__ = [
     # Semantic interpretation
     "VoteIntention",
-    "ConfidenceLevel", 
+    "ConfidenceLevel",
     "SemanticVoteResult",
     "SemanticVoteInterpreter",
-    
     # Natural language processing
     "PatternLibrary",
     "ContextualAnalyzer",
     "ContentAnalysisResult",
     "NaturalLanguageProcessor",
-    
     # Vote understanding
     "VoteUnderstandingEngine",
     "IntentionClassifier",
     "MessageInsightExtractor",
-    "ParsingStatistics"
+    "ParsingStatistics",
 ]

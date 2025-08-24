@@ -7,46 +7,44 @@ decision-making in distributed voting systems.
 
 # Core consensus strategies and algorithms
 from .adaptive_strategies import (
-    DecisionComplexity,
-    ConsensusStrategy,
     AdaptiveStrategySelector,
+    ComplexityClassifier,
+    ConsensusStrategy,
     ContextualMetrics,
-    ComplexityClassifier
-)
-
-# Deliberation engine components
-from .deliberation_engine import (
-    StructuredDeliberationEngine,
-    DeliberationRound,
-    DeliberationSummary,
-    ConvergenceAnalyzer
+    DecisionComplexity,
 )
 
 # Smart consensus orchestration
 from .consensus_algorithms import (
-    SmartConsensusOrchestrator,
     ConsensusRecommendation,
     LearningFramework,
-    PerformanceInsights
+    PerformanceInsights,
+    SmartConsensusOrchestrator,
+)
+
+# Deliberation engine components
+from .deliberation_engine import (
+    ConvergenceAnalyzer,
+    DeliberationRound,
+    DeliberationSummary,
+    StructuredDeliberationEngine,
 )
 
 __all__ = [
     # Adaptive strategies
     "DecisionComplexity",
-    "ConsensusStrategy", 
+    "ConsensusStrategy",
     "AdaptiveStrategySelector",
     "ContextualMetrics",
     "ComplexityClassifier",
-    
     # Deliberation engine
     "StructuredDeliberationEngine",
     "DeliberationRound",
-    "DeliberationSummary", 
+    "DeliberationSummary",
     "ConvergenceAnalyzer",
-    
     # Consensus algorithms
     "SmartConsensusOrchestrator",
     "ConsensusRecommendation",
     "LearningFramework",
-    "PerformanceInsights"
+    "PerformanceInsights",
 ]

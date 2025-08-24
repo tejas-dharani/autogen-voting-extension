@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Microsoft Research-Grade Benchmark Runner
+Benchmark Runner
 
 Comprehensive benchmarking script for evaluating voting systems with
 research-grade methodology and systematic experimental design.
@@ -404,9 +404,9 @@ async def run_scalability_test() -> None:
 
 
 def main() -> None:
-    """Main entry point for Microsoft Research-grade benchmark runner."""
+    """Main entry point for benchmark runner."""
     parser = ArgumentParser(
-        description="Microsoft Research-Grade VotingAI Benchmark Runner",
+        description="VotingAI Benchmark Runner",
         formatter_class=RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -419,7 +419,7 @@ Examples:
   python run_benchmarks.py --scalability             # Scalability analysis
   python run_benchmarks.py --majority-only           # Test majority voting only
 
-Microsoft Research Standards:
+
   - Systematic experimental design
   - Comprehensive metrics collection  
   - Statistical significance testing
